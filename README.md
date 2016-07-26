@@ -36,7 +36,8 @@ func main() {
     }
 
     fmt.Printf("%+v", summary)
-    //&{
+    /*
+    &{
         AverageRounds:2.73
         AttackerWinPercentage:59.91
         DefenderWinPercentage:35.01
@@ -45,7 +46,8 @@ func main() {
         KamikazeHitsAverage:0
         AttackerAvIpcLoss:18.38
         DefenderAvIpcLoss:20.69
-       }
+    }
+    */
 }
 
 ```
