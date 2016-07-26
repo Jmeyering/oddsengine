@@ -1,39 +1,57 @@
 package oddsengine
 
-import "math"
+import (
+	"math"
+	"strconv"
+	"strings"
+)
 
 // Summary is a type which represents the an averaged results of multiple
 // conflicts.
 type Summary struct {
 	// AverageRounds The number of rounds on average a conflict lasted.
-	AverageRounds float64
+	AverageRounds float64 `json:"averageRounds"`
 
 	// AttackerWinPercentage The percentage of conflicts that the attacker won
-	AttackerWinPercentage float64
+	AttackerWinPercentage float64 `json:"attackerWinPercentage`
 
 	// DefenderWinPercentage The percentage of conflicts that the defender won
-	DefenderWinPercentage float64
+	DefenderWinPercentage float64 `json:"defenderWinPercentage"`
 
 	// DrawPercentage The percentage of conflicts that was a draw
-	DrawPercentage float64
+	DrawPercentage float64 `json:"drawPercentage"`
 
 	// AAAHitsAverage The number of AAA hits per round on average
-	AAAHitsAverage float64
+	AAAHitsAverage float64 `json:"aaaHitsAverage"`
 
 	// KamikazeHitsAverage The number of kamikaze hits per round on average
-	KamikazeHitsAverage float64
+	KamikazeHitsAverage float64 `json:"kamikazeHitsAverage"`
 
-	// AttackerAvIpcLoss The number of IPC's the attacker loses on average
-	AttackerAvIpcLoss float64
+	// AttackerAvgIpcLoss The number of IPC's the attacker loses on average
+	AttackerAvgIpcLoss float64 `json:"attackerAvgIpcLoss"`
 
-	// DefenderAvIpcLoss The number of IPC's the defender loses on average
-	DefenderAvIpcLoss float64
+	// DefenderAvgIpcLoss The number of IPC's the defender loses on average
+	DefenderAvgIpcLoss float64 `json:"defenderAvgIpcLoss"`
+
+	// AttackerPiecesRemaining represents all the remaining pieces at the end
+	// of conflict. The pieces are represented by a string and the number of
+	// times that that formation remained at the end of the conflict is the
+	// value
+	AttackerPiecesRemaining map[string]int `json:"attackerPiecesRemaining"`
+
+	// DefenderPiecesRemaining represents all the remaining pieces at the end
+	// of conflict. The pieces are represented by a string and the number of
+	// times that that formation remained at the end of the conflict is the
+	// value
+	DefenderPiecesRemaining map[string]int `json:"defenderPiecesRemaining"`
 }
 
 // generateSummary Creates a summary from a slice of profiles.
 func generateSummary(p []ConflictProfile) *Summary {
 
 	var summary Summary
+	summary.AttackerPiecesRemaining = map[string]int{}
+	summary.DefenderPiecesRemaining = map[string]int{}
 	var totalRounds float64
 	var totalAAAHits float64
 	var totalKamikazeHits float64
@@ -48,8 +66,24 @@ func generateSummary(p []ConflictProfile) *Summary {
 			totalDraw += 1
 		} else if profile.Outcome == 1 {
 			totalAttackerWins += 1
+
+			attackerRemainingString := formationSliceToString(profile.AttackerPiecesRemaining)
+
+			if _, ok := summary.AttackerPiecesRemaining[attackerRemainingString]; ok {
+				summary.AttackerPiecesRemaining[attackerRemainingString]++
+			} else {
+				summary.AttackerPiecesRemaining[attackerRemainingString] = 1
+			}
 		} else if profile.Outcome == -1 {
 			totalDefenderWins += 1
+
+			defenderRemainingString := formationSliceToString(profile.DefenderPiecesRemaining)
+
+			if _, ok := summary.DefenderPiecesRemaining[defenderRemainingString]; ok {
+				summary.DefenderPiecesRemaining[defenderRemainingString]++
+			} else {
+				summary.DefenderPiecesRemaining[defenderRemainingString] = 1
+			}
 		}
 
 		totalRounds += float64(profile.Rounds)
@@ -61,13 +95,23 @@ func generateSummary(p []ConflictProfile) *Summary {
 	summary.AttackerWinPercentage = round((totalAttackerWins/float64(len(p)))*100, 2)
 	summary.DefenderWinPercentage = round((totalDefenderWins/float64(len(p)))*100, 2)
 	summary.DrawPercentage = round((totalDraw/float64(len(p)))*100, 2)
-	summary.AttackerAvIpcLoss = round((totalAttackerIpcLoss / float64(len(p))), 2)
+	summary.AttackerAvgIpcLoss = round((totalAttackerIpcLoss / float64(len(p))), 2)
 	summary.AAAHitsAverage = round((totalAAAHits / float64(len(p))), 2)
 	summary.KamikazeHitsAverage = round((totalKamikazeHits / float64(len(p))), 2)
-	summary.DefenderAvIpcLoss = round((totalDefenderIpcLoss / float64(len(p))), 2)
+	summary.DefenderAvgIpcLoss = round((totalDefenderIpcLoss / float64(len(p))), 2)
 	summary.AverageRounds = round((totalRounds / float64(len(p))), 2)
 
 	return &summary
+}
+
+func formationSliceToString(fs []map[string]int) string {
+	var ss []string
+	for _, f := range fs {
+		for u, n := range f {
+			ss = append(ss, u+":"+strconv.Itoa(n))
+		}
+	}
+	return strings.Join(ss, ",")
 }
 
 // Round limits all floats to 2 decimal places

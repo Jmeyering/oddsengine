@@ -3,6 +3,7 @@ package oddsengine
 import (
 	"fmt"
 	"math/rand"
+	"sort"
 	"strings"
 	"time"
 )
@@ -486,8 +487,13 @@ func resolveConflict(a, d map[string]int, ool []string) *ConflictProfile {
 
 	// Record some more data to the profile
 	profile.Rounds = len(profile.DefenderHits)
-	profile.AttackerPiecesRemaining = attackers
-	profile.DefenderPiecesRemaining = defenders
+
+	if len(attackers) > 0 {
+		profile.AttackerPiecesRemaining = formationToSortedSlice(attackers)
+	}
+	if len(defenders) > 0 {
+		profile.DefenderPiecesRemaining = formationToSortedSlice(defenders)
+	}
 
 	// We record the conflict outcome onto the profile. Marked by
 	//  1: Attacker Victory
@@ -857,4 +863,19 @@ func hasLimitedAircraft(a, b map[string]int) bool {
 		return false
 	}
 	return true
+}
+
+func formationToSortedSlice(f map[string]int) []map[string]int {
+	ss := []map[string]int{}
+	keys := make([]string, 0, len(f))
+	for u := range f {
+		keys = append(keys, u)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		ss = append(ss, map[string]int{k: f[k]})
+	}
+
+	return ss
 }
