@@ -57,7 +57,8 @@ precise. The map is formatted as `unitalias: numunits`. So
 `map[string]int{"des":2, "bat":3}` is a unit formation of 2 destroyers and 3
 battleships. All units are aliased by taking the first 3 letters of their name.
 
-*Note*
+**Note:**
+
 Strategic bombers are identified by `bom` rather than `str`.
 
 ## Unit Designations
@@ -94,7 +95,7 @@ ships.
 defenders := map[string]int{"des": 3, "-bat": 1, "-car": 1, "bat": 2}
 ```
 
-The above unit formation includes 3 battleships, of which, 2 are damaged. It
+The above unit formation includes 3 battleships, of which, 1 is damaged. It
 also contains 1 damaged carrier
 
 ## Order of loss
@@ -111,12 +112,13 @@ come when dealing with defending bombers and in some sea battles, where you
 would really like to sacrifice some carriers and not take your cruisers or
 aircraft.
 
-Potentially I will work in an attacker and defender specific "value" model of
+Potentially I may work in an attacker and defender specific "value" model of
 loss which will factor in both cost and hit value of the piece.
 
-*Note*
-There is a workaround to this problem is manually assigning
-[reserved units](#unit-designations).
+**Note:**
+
+The current workaround to this problem is manually assigning
+[reserved units](#reserved).
 
 ## Combined Arms
 
@@ -175,7 +177,8 @@ the first round of conflict.
 
 Will fire two offshore bombardment shots from the battleship.
 
-*Note*
+**Note:**
+
 According to the rules, offshore bombardment is limited to the number of units
 offloaded into the territory via transport. The engine assumes you have already
 done this calculation and will not limit the number of bombardments that have
