@@ -1,0 +1,6 @@
+*.sw*
+oddsengine
+
+cover.out
+
+seed*
