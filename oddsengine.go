@@ -822,7 +822,7 @@ func checkPieceValidity(p map[string]int) error {
 	}
 
 	if len(invalid) > 0 {
-		return fmt.Errorf("Assigned pieces not found in Axis and Allies %v invalid pieces are:\n%v", activeGame, strings.Join(invalid, ", "))
+		return &InvalidPieceError{fmt.Sprintf("\"%v\"", strings.Join(invalid, "\", \""))}
 	}
 
 	return nil
