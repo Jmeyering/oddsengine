@@ -13,7 +13,7 @@ type Summary struct {
 	AverageRounds float64 `json:"averageRounds"`
 
 	// AttackerWinPercentage The percentage of conflicts that the attacker won
-	AttackerWinPercentage float64 `json:"attackerWinPercentage`
+	AttackerWinPercentage float64 `json:"attackerWinPercentage"`
 
 	// DefenderWinPercentage The percentage of conflicts that the defender won
 	DefenderWinPercentage float64 `json:"defenderWinPercentage"`
