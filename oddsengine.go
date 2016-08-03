@@ -691,7 +691,11 @@ func canBombard(units map[string]int) bool {
 	}
 
 	for _, s := range bombardShips {
-		if _, ok := units[s]; ok {
+		alias := s
+		if strings.HasPrefix(s, "-") || strings.HasPrefix(s, "+") {
+			alias = s[1:]
+		}
+		if _, ok := units[alias]; ok {
 			hasBombardableShip = true
 			break
 		}
