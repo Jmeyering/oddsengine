@@ -29,6 +29,7 @@ func TestConflictResolution(t *testing.T) {
 	values := []struct {
 		attackers         map[string]int
 		defenders         map[string]int
+		game              string
 		randSeed          int64
 		outcome           ConflictProfile
 		mustTakeTerritory bool
@@ -36,6 +37,7 @@ func TestConflictResolution(t *testing.T) {
 		{
 			map[string]int{"tac": 2, "mec": 1, "art": 3},
 			map[string]int{"inf": 4, "tan": 2, "fig": 3},
+			"1940",
 			1,
 			ConflictProfile{
 				Rounds:                  2,
@@ -53,6 +55,7 @@ func TestConflictResolution(t *testing.T) {
 		{
 			map[string]int{"mec": 1, "art": 3, "tan": 1, "tac": 2, "bat": 2},
 			map[string]int{"inf": 3, "mec": 3, "tan": 1},
+			"1940",
 			1,
 			ConflictProfile{
 				Rounds:                  3,
@@ -70,6 +73,7 @@ func TestConflictResolution(t *testing.T) {
 		{
 			map[string]int{"inf": 4, "fig": 3, "tac": 2, "bom": 1},
 			map[string]int{"aaa": 1, "inf": 2, "tan": 2},
+			"1940",
 			2,
 			ConflictProfile{
 				Rounds:                  1,
@@ -87,6 +91,7 @@ func TestConflictResolution(t *testing.T) {
 		{
 			map[string]int{"sub": 2, "bat": 1, "cru": 1, "fig": 1},
 			map[string]int{"sub": 1, "cru": 3},
+			"1940",
 			2,
 			ConflictProfile{
 				Rounds:                  1,
@@ -104,6 +109,7 @@ func TestConflictResolution(t *testing.T) {
 		{
 			map[string]int{"sub": 2, "bat": 1, "des": 1, "fig": 1},
 			map[string]int{"sub": 1, "cru": 3, "car": 1},
+			"1940",
 			2,
 			ConflictProfile{
 				Rounds:                  3,
@@ -121,6 +127,7 @@ func TestConflictResolution(t *testing.T) {
 		{
 			map[string]int{"cru": 4, "fig": 1},
 			map[string]int{"sub": 2, "cru": 1, "bat": 1},
+			"1940",
 			5,
 			ConflictProfile{
 				Rounds:                  3,
@@ -138,6 +145,7 @@ func TestConflictResolution(t *testing.T) {
 		{
 			map[string]int{"des": 1},
 			map[string]int{"des": 1, "kam": 2},
+			"1940",
 			5,
 			ConflictProfile{
 				Rounds:                  1,
@@ -155,6 +163,7 @@ func TestConflictResolution(t *testing.T) {
 		{
 			map[string]int{"inf": 4, "fig": 3, "tac": 2},
 			map[string]int{"aaa": 2, "inf": 2, "tan": 2},
+			"1940",
 			3,
 			ConflictProfile{
 				Rounds:                  1,
@@ -172,6 +181,7 @@ func TestConflictResolution(t *testing.T) {
 		{
 			map[string]int{"fig": 3},
 			map[string]int{"tan": 3},
+			"1940",
 			19,
 			ConflictProfile{
 				Rounds:          3,
@@ -188,6 +198,7 @@ func TestConflictResolution(t *testing.T) {
 		{
 			map[string]int{"inf": 4, "fig": 3, "tac": 2},
 			map[string]int{"aaa": 2, "inf": 4, "tan": 2},
+			"1940",
 			3,
 			ConflictProfile{
 				Rounds:                  4,
@@ -205,6 +216,7 @@ func TestConflictResolution(t *testing.T) {
 		{
 			map[string]int{"inf": 4, "art": 3},
 			map[string]int{"inf": 1, "tan": 3},
+			"1940",
 			1,
 			ConflictProfile{
 				Rounds:                  2,
@@ -223,6 +235,7 @@ func TestConflictResolution(t *testing.T) {
 		{
 			map[string]int{"inf": 4, "fig": 2, "+mec": 1},
 			map[string]int{"inf": 2, "tan": 3},
+			"1940",
 			2,
 			ConflictProfile{
 				Rounds:                  3,
@@ -241,6 +254,7 @@ func TestConflictResolution(t *testing.T) {
 		{
 			map[string]int{"+inf": 1, "inf": 2, "art": 3, "fig": 2},
 			map[string]int{"+inf": 1, "mec": 5, "tan": 3},
+			"1940",
 			2,
 			ConflictProfile{
 				Rounds:                  5,
@@ -259,6 +273,7 @@ func TestConflictResolution(t *testing.T) {
 		{
 			map[string]int{"inf": 2, "art": 3, "fig": 2},
 			map[string]int{"+inf": 1, "mec": 5, "tan": 3},
+			"1940",
 			2,
 			ConflictProfile{
 				Rounds:                  2,
@@ -276,6 +291,7 @@ func TestConflictResolution(t *testing.T) {
 		{
 			map[string]int{"sub": 4, "des": 6, "cru": 1, "car": 1, "fig": 2},
 			map[string]int{"kam": 1, "des": 2, "bat": 3},
+			"1940",
 			2,
 			ConflictProfile{
 				Rounds:                  2,
@@ -295,7 +311,8 @@ func TestConflictResolution(t *testing.T) {
 		{
 			map[string]int{"fig": 4},
 			map[string]int{"sub": 10},
-			0,
+			"1940",
+			1,
 			ConflictProfile{
 				Rounds:                  0,
 				AttackerPiecesRemaining: formationToSortedSlice(map[string]int{"fig": 4}),
@@ -304,9 +321,30 @@ func TestConflictResolution(t *testing.T) {
 			},
 			false,
 		},
+		// Test that in 1942 Carriers are not represented as capital ships.
+		{
+			map[string]int{"car": 1},
+			map[string]int{"sub": 1},
+			"1942",
+			5,
+			ConflictProfile{
+				Rounds:                  1,
+				DefenderHits:            []int{1},
+				AttackerHits:            []int{0},
+				AttackerIpcLoss:         14,
+				DefenderIpcLoss:         0,
+				DefenderPiecesRemaining: formationToSortedSlice(map[string]int{"sub": 1}),
+				AAAHits:                 0,
+				KamikazeHits:            0,
+				Outcome:                 -1,
+			},
+			false,
+		},
 	}
 	for _, tt := range values {
-		mustTakeTerritory = tt.mustTakeTerritory
+		SetGame(tt.game)
+		SetMustTakeTerritory(tt.mustTakeTerritory)
+
 		ool := customizeOol(tt.attackers, tt.defenders)
 		if mustTakeTerritory {
 			reserveHighestValueLandUnit(tt.attackers)
@@ -317,12 +355,16 @@ func TestConflictResolution(t *testing.T) {
 			t.Errorf("Conflict Profile Doesn't Match\nexpected: %+v\nactual: %+v", tt.outcome, *p)
 		}
 	}
+
+	// Reset the game back to 1940
+	SetGame("1940")
 }
 
 func TestGetSummary(t *testing.T) {
 	values := []struct {
 		attackers         map[string]int
 		defenders         map[string]int
+		game              string
 		randSeed          int64
 		iterations        int
 		outcome           Summary
@@ -331,6 +373,7 @@ func TestGetSummary(t *testing.T) {
 		{
 			map[string]int{"inf": 4, "fig": 3, "tac": 2, "bom": 1},
 			map[string]int{"aaa": 1, "inf": 2, "tan": 2},
+			"1940",
 			2,
 			1,
 			Summary{
@@ -350,6 +393,7 @@ func TestGetSummary(t *testing.T) {
 		{
 			map[string]int{"inf": 2, "fig": 5, "art": 3},
 			map[string]int{"inf": 6, "tan": 2, "tac": 1},
+			"1940",
 			2,
 			5,
 			Summary{
@@ -371,6 +415,7 @@ func TestGetSummary(t *testing.T) {
 		{
 			map[string]int{"sub": 4, "des": 6, "cru": 1, "car": 1, "fig": 2},
 			map[string]int{"kam": 1, "des": 2, "bat": 3},
+			"1940",
 			2,
 			6,
 			Summary{
@@ -390,6 +435,7 @@ func TestGetSummary(t *testing.T) {
 		{
 			map[string]int{"inf": 7, "tan": 1, "fig": 7, "tac": 7, "bom": 2},
 			map[string]int{"inf": 15, "tan": 4, "fig": 5},
+			"1940",
 			3,
 			10,
 			Summary{
@@ -409,6 +455,7 @@ func TestGetSummary(t *testing.T) {
 	}
 
 	for _, tt := range values {
+		SetGame(tt.game)
 		SetIterations(tt.iterations)
 		SetMustTakeTerritory(tt.mustTakeTerritory)
 		rand.Seed(tt.randSeed)
@@ -417,4 +464,7 @@ func TestGetSummary(t *testing.T) {
 			t.Errorf("Summary is incorrect.\nexpected: %+v\nactual: %+v", tt.outcome, s)
 		}
 	}
+
+	// Reset the game back to 1940
+	SetGame("1940")
 }

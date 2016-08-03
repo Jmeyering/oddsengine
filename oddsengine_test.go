@@ -251,6 +251,9 @@ func TestPieceValidity(t *testing.T) {
 			t.Errorf("Piece validity was not determined correctly for game %v\npieces: %v\nmessage: %v", tt.game, tt.pieces, err)
 		}
 	}
+
+	// Reset the game back to 1940
+	SetGame("1940")
 }
 
 func TestHasLimitedAircraft(t *testing.T) {

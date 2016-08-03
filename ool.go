@@ -13,8 +13,21 @@ var (
 	noSubOol     []string
 )
 
+func resetOol() {
+	landTroops = []string{}
+	bombardShips = []string{}
+	capitalShips = []string{}
+	aircraft = []string{}
+	surfaceShips = []string{}
+	ships = []string{}
+	baseOol = []string{}
+	noSubOol = []string{}
+}
+
 // setupOol creates all the piece slices that we will use within the engine.
 func setupOol() {
+
+	resetOol()
 
 	var hasAAA bool
 

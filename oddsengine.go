@@ -81,6 +81,7 @@ func SetMustTakeTerritory(a bool) {
 func SetGame(g string) {
 	activeGame = g
 	activePieces = getPiecesForGame(g)
+	setupOol()
 }
 
 // rollDie functions as a random 1-6 number generator.
