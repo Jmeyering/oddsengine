@@ -11,18 +11,18 @@ type RollValue struct{ hitValue, num int }
 type RollMap []RollValue
 
 // Len return the length of the map
-func (slice RollMap) Len() int {
-	return len(slice)
+func (r RollMap) Len() int {
+	return len(r)
 }
 
 // Less show which rollmap is less than than another
-func (slice RollMap) Less(i, j int) bool {
-	return slice[i].hitValue < slice[j].hitValue
+func (r RollMap) Less(i, j int) bool {
+	return r[i].hitValue < r[j].hitValue
 }
 
 // Swap change the position of two elements in the map
-func (slice RollMap) Swap(i, j int) {
-	slice[i], slice[j] = slice[j], slice[i]
+func (r RollMap) Swap(i, j int) {
+	r[i], r[j] = r[j], r[i]
 }
 
 // AddRoll will add a specific RollValue to a RollMap based on a hitValue and
@@ -43,12 +43,12 @@ func (r RollMap) AddRoll(hitValue, num int) (newMap RollMap) {
 		sort.Sort(r)
 
 		return r
-	} else {
-		newMap = append(r, RollValue{hitValue, num})
-		sort.Sort(newMap)
-
-		return newMap
 	}
+
+	newMap = append(r, RollValue{hitValue, num})
+	sort.Sort(newMap)
+
+	return newMap
 }
 
 // Reduce will reduce the num value of one RollValue within a RollMap. If a

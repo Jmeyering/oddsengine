@@ -19,21 +19,28 @@ type Piece struct {
 // Pieces is a container for multiple Piece structs
 type Pieces []Piece
 
-/**
- * Implement the sortable interface on the pieces type
- */
+// Swap implementing Sortable
 func (p Pieces) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
 }
+
+// Len implementing Sortable
 func (p Pieces) Len() int {
 	return len(p)
 }
 
 // Create three different Sortable containers for our Pieces
+
+// ByDefendingPower sorts the pieces by the higest Defend value of the unit
 type ByDefendingPower struct{ Pieces }
+
+// ByAttackingPower sorts the pieces by the higest Attack value of the unit
 type ByAttackingPower struct{ Pieces }
+
+// ByCost sorts the pieces by the lowest Cost value of the unit
 type ByCost struct{ Pieces }
 
+// Less implementing Sortable
 func (p ByDefendingPower) Less(i, j int) bool {
 	if p.Pieces[i].Alias == "aaa" {
 		return false
@@ -41,10 +48,12 @@ func (p ByDefendingPower) Less(i, j int) bool {
 		return true
 	} else if p.Pieces[i].Defend == p.Pieces[j].Defend {
 		return p.Pieces[i].Cost < p.Pieces[j].Cost
-	} else {
-		return p.Pieces[i].Defend < p.Pieces[j].Defend
 	}
+
+	return p.Pieces[i].Defend < p.Pieces[j].Defend
 }
+
+// Less implementing Sortable
 func (p ByAttackingPower) Less(i, j int) bool {
 	if p.Pieces[i].Alias == "aaa" {
 		return false
@@ -52,10 +61,12 @@ func (p ByAttackingPower) Less(i, j int) bool {
 		return true
 	} else if p.Pieces[i].Attack == p.Pieces[j].Attack {
 		return p.Pieces[i].Cost < p.Pieces[j].Cost
-	} else {
-		return p.Pieces[i].Attack < p.Pieces[j].Attack
 	}
+
+	return p.Pieces[i].Attack < p.Pieces[j].Attack
 }
+
+// Less implementing Sortable
 func (p ByCost) Less(i, j int) bool {
 	if p.Pieces[i].Alias == "aaa" {
 		return false
@@ -63,9 +74,9 @@ func (p ByCost) Less(i, j int) bool {
 		return true
 	} else if p.Pieces[i].Cost == p.Pieces[j].Cost {
 		return p.Pieces[i].Attack < p.Pieces[j].Attack
-	} else {
-		return p.Pieces[i].Cost < p.Pieces[j].Cost
 	}
+
+	return p.Pieces[i].Cost < p.Pieces[j].Cost
 }
 
 // getPiecesForGame returns a Pieces type containing all the pieces that are

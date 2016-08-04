@@ -15,18 +15,18 @@ var (
 
 	// iterations is the number of times we will run the sim and generate a
 	// ConflictProfile for the Summary. Default is 1000
-	iterations int = 1000
+	iterations = 1000
 
 	// activePieces are the pieces available in the current game version
 	// default pieces are 1940 pieces.
-	activePieces Pieces = getPiecesForGame("1940")
+	activePieces = getPiecesForGame("1940")
 
 	// activeGame is the game current being run by the simulator
-	activeGame string = "1940"
+	activeGame = "1940"
 
 	// oolProfile is the general strategy for taking losses. Possible values are
 	// "cost" and "hitValue"
-	oolProfile string = "cost"
+	oolProfile = "cost"
 )
 
 // init the random seed for this run of the engine
@@ -696,7 +696,7 @@ func getTotalNumUnits(u map[string]int) (num int) {
 // capable of putting up a defensive hit. AAA is not a defending unit.
 func conflictIsAutoKill(d, a map[string]int, firstRound bool) (autoKill bool) {
 	autoKill = true
-	for u, _ := range d {
+	for u := range d {
 		if strings.HasPrefix(u, "-") || strings.HasPrefix(u, "+") {
 			u = u[1:]
 		}
@@ -757,7 +757,7 @@ func customizeOol(attackers, defenders map[string]int) []string {
 	copy(ool, baseOol)
 
 	// We need to see all reserved attackers and add them to the end of the ool
-	for alias, _ := range attackers {
+	for alias := range attackers {
 		if strings.HasPrefix(alias, "+") {
 			ool = append(ool, alias)
 		}
@@ -765,7 +765,7 @@ func customizeOol(attackers, defenders map[string]int) []string {
 
 	// We need to see all reserved defenders and add them to the end of the ool
 	// Skipping those which have already been added
-	for alias, _ := range defenders {
+	for alias := range defenders {
 		if strings.HasPrefix(alias, "+") {
 			if !sliceHas(ool, alias) {
 				ool = append(ool, alias)
@@ -817,7 +817,7 @@ func checkPieceValidity(p map[string]int) error {
 
 // hasOnlyPlanes returns true if the formation contains only planes
 func hasOnlyPlanes(u map[string]int) bool {
-	for alias, _ := range u {
+	for alias := range u {
 		if strings.HasPrefix(alias, "-") || strings.HasPrefix(alias, "+") {
 			alias = alias[1:]
 		}
@@ -831,7 +831,7 @@ func hasOnlyPlanes(u map[string]int) bool {
 
 // hasGroundUnits returns true if the formation contains any ground units
 func hasGroundUnits(u map[string]int) bool {
-	for alias, _ := range u {
+	for alias := range u {
 		if strings.HasPrefix(alias, "-") || strings.HasPrefix(alias, "+") {
 			alias = alias[1:]
 		}
@@ -845,7 +845,7 @@ func hasGroundUnits(u map[string]int) bool {
 
 // hasAircraft returns true if the formation contains any aircraft
 func hasAircraft(u map[string]int) bool {
-	for alias, _ := range u {
+	for alias := range u {
 		if strings.HasPrefix(alias, "-") || strings.HasPrefix(alias, "+") {
 			alias = alias[1:]
 		}
@@ -859,7 +859,7 @@ func hasAircraft(u map[string]int) bool {
 
 // hasBombardShips returns true if the formation contains any aircraft
 func hasBombardShips(u map[string]int) bool {
-	for alias, _ := range u {
+	for alias := range u {
 		if strings.HasPrefix(alias, "-") || strings.HasPrefix(alias, "+") {
 			alias = alias[1:]
 		}

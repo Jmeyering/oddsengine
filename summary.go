@@ -63,9 +63,9 @@ func generateSummary(p []ConflictProfile) *Summary {
 
 	for _, profile := range p {
 		if profile.Outcome == 0 {
-			totalDraw += 1
+			totalDraw++
 		} else if profile.Outcome == 1 {
-			totalAttackerWins += 1
+			totalAttackerWins++
 
 			attackerRemainingString := formationSliceToString(profile.AttackerPiecesRemaining)
 
@@ -75,7 +75,7 @@ func generateSummary(p []ConflictProfile) *Summary {
 				summary.AttackerPiecesRemaining[attackerRemainingString] = 1
 			}
 		} else if profile.Outcome == -1 {
-			totalDefenderWins += 1
+			totalDefenderWins++
 
 			defenderRemainingString := formationSliceToString(profile.DefenderPiecesRemaining)
 
