@@ -1,5 +1,7 @@
 # Axis and Allies Odds Calculator
 
+[![Build Status](https://travis-ci.org/Jmeyering/oddsengine.svg?branch=master)](https://travis-ci.org/Jmeyering/oddsengine)
+
 ## Introduction
 
 The odds engine is a tool to calculate the odds of Axis and Allies conflicts.
