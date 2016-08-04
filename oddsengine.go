@@ -158,7 +158,7 @@ func resolveConflict(a, d map[string]int, ool []string) *ConflictProfile {
 				}
 
 				// kamikaze are a one time use so delete them here.
-				delete(defenders, "kam")
+				deleteUnitFromFormation(defenders, "kam")
 			}
 
 			// If we have AAA ability in the zone, we need to calculate those hits
@@ -185,7 +185,7 @@ func resolveConflict(a, d map[string]int, ool []string) *ConflictProfile {
 				// We need to remove the bombardships from the formation right
 				// away to prevent them from getting hits assigned.
 				for _, ship := range bombardShips {
-					delete(attackers, ship)
+					deleteUnitFromFormation(attackers, ship)
 				}
 			}
 		}
@@ -869,6 +869,14 @@ func hasBombardShips(u map[string]int) bool {
 	}
 
 	return false
+}
+
+// deleteUnitFromFormation remove a unit and all its prefixed versions from a
+// formation
+func deleteUnitFromFormation(formation map[string]int, unit string) {
+	delete(formation, unit)
+	delete(formation, "+"+unit)
+	delete(formation, "-"+unit)
 }
 
 // hasLimitedAircraft returns true if the first formation has aircraft which can
