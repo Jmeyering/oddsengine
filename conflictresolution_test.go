@@ -11,6 +11,8 @@ import (
 // battle with a different random seed. You can view the result of seeding
 // random with different random Seeds here
 // https://play.golang.org/p/1L-kbymrnK
+// look for specific results here
+// https://play.golang.org/p/EmS8-b7cV-
 //
 // The order of the rolls is rather complicated.
 //
@@ -337,6 +339,45 @@ func TestConflictResolution(t *testing.T) {
 				AAAHits:                 0,
 				KamikazeHits:            0,
 				Outcome:                 -1,
+			},
+			false,
+		},
+		// Test that AAA are counted as defending units, when there are only
+		// planes attacking a region. Generally an attacker on AAA is an auto
+		// kill, this is an exception to that rule.
+		{
+			map[string]int{"fig": 1},
+			map[string]int{"aaa": 1},
+			"1940",
+			5,
+			ConflictProfile{
+				Rounds:                  1,
+				DefenderHits:            []int{0},
+				AttackerHits:            []int{0},
+				AttackerIpcLoss:         10,
+				DefenderIpcLoss:         0,
+				DefenderPiecesRemaining: formationToSortedSlice(map[string]int{"aaa": 1}),
+				AAAHits:                 1,
+				KamikazeHits:            0,
+				Outcome:                 -1,
+			},
+			false,
+		},
+		{
+			map[string]int{"fig": 2},
+			map[string]int{"aaa": 1},
+			"1940",
+			51,
+			ConflictProfile{
+				Rounds:                  1,
+				DefenderHits:            []int{0},
+				AttackerHits:            []int{0},
+				AttackerIpcLoss:         10,
+				DefenderIpcLoss:         5,
+				AttackerPiecesRemaining: formationToSortedSlice(map[string]int{"fig": 1}),
+				AAAHits:                 1,
+				KamikazeHits:            0,
+				Outcome:                 1,
 			},
 			false,
 		},

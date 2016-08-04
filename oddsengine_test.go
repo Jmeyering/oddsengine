@@ -13,6 +13,9 @@ func TestIsResolvedFunction(t *testing.T) {
 	}{
 		{map[string]int{"tac": 2, "mec": 1, "art": 3}, map[string]int{"tan": 1}, false},
 		{map[string]int{"inf": 2, "tan": 1, "fig": 2}, map[string]int{}, true},
+		{map[string]int{"fig": 2, "bom": 1}, map[string]int{"sub": 4}, true},
+		{map[string]int{"sub": 2}, map[string]int{"fig": 4}, true},
+		{map[string]int{"sub": 2}, map[string]int{"fig": 4, "des": 1}, false},
 	}
 	for _, tt := range values {
 		if isResolved(tt.attackers, tt.defenders) != tt.result {
@@ -91,16 +94,18 @@ func TestSupriseAttack(t *testing.T) {
 		defenderCan bool
 	}{
 		{map[string]int{"sub": 1, "cru": 2}, map[string]int{"sub": 2, "bat": 2}, true, true},
+		{map[string]int{"+sub": 1, "cru": 2}, map[string]int{"sub": 2, "bat": 2}, true, true},
 		{map[string]int{"sub": 1, "cru": 2}, map[string]int{"sub": 2, "des": 1}, false, true},
+		{map[string]int{"sub": 1, "cru": 2}, map[string]int{"sub": 2, "+des": 1}, false, true},
 		{map[string]int{"des": 1, "cru": 2}, map[string]int{"sub": 2, "des": 1}, false, false},
 		{map[string]int{"des": 1, "cru": 2}, map[string]int{"car": 2, "des": 1}, false, false},
 	}
 
 	for _, tt := range values {
-		if attackerCanSupriseAttack(tt.attackers, tt.defenders) != tt.attackerCan {
+		if canSupriseAttack(tt.attackers, tt.defenders) != tt.attackerCan {
 			t.Errorf("the attacker suprise attack ability was not calculated correctly")
 		}
-		if defenderCanSupriseAttack(tt.attackers, tt.defenders) != tt.defenderCan {
+		if canSupriseAttack(tt.defenders, tt.attackers) != tt.defenderCan {
 			t.Errorf("the attacker suprise attack ability was not calculated correctly")
 		}
 	}
@@ -114,6 +119,8 @@ func TestCanBombard(t *testing.T) {
 	}{
 		{map[string]int{"sub": 1, "car": 3}, false, RollMap{}},
 		{map[string]int{"sub": 1, "bat": 1, "inf": 1}, true, RollMap{{4, 1}}},
+		{map[string]int{"sub": 1, "+bat": 1, "inf": 1}, true, RollMap{{4, 1}}},
+		{map[string]int{"sub": 1, "-bat": 1, "inf": 1}, true, RollMap{{4, 1}}},
 		{map[string]int{"sub": 1, "des": 3}, false, RollMap{}},
 		{map[string]int{"cru": 1, "des": 3, "tan": 2}, true, RollMap{{3, 1}}},
 		{map[string]int{"car": 2, "cru": 1, "des": 3}, false, RollMap{}},
@@ -270,6 +277,89 @@ func TestHasLimitedAircraft(t *testing.T) {
 	for _, tt := range values {
 		if hasLimitedAircraft(tt.attackers, tt.defenders) != tt.result {
 			t.Errorf("The need to limit aircraft not calculated correctly\nattackers: %v\ndefenders: %v", tt.attackers, tt.defenders)
+		}
+	}
+}
+
+func TestNumAllUnitsInFormation(t *testing.T) {
+	values := []struct {
+		formation    map[string]int
+		find         string
+		result       int
+		strictResult int
+	}{
+		{map[string]int{"fig": 2}, "fig", 2, 2},
+		{map[string]int{"fig": 1, "des": 1}, "des", 1, 1},
+		{map[string]int{"bat": 1, "tac": 2, "sub": 2}, "sub", 2, 2},
+		{map[string]int{"des": 1, "-bat": 2, "bat": 2}, "bat", 4, 2},
+		{map[string]int{"+inf": 1, "inf": 2, "tac": 2}, "inf", 3, 2},
+		{map[string]int{"+car": 1, "-car": 2, "car": 2}, "car", 5, 2},
+	}
+
+	for _, tt := range values {
+		actual := numAllUnitsInFormation(tt.formation, tt.find)
+		if actual != tt.result {
+			t.Errorf("the number of total units in the formation was not calculated correctly\nexpected: %v\nactual: %v", tt.result, actual)
+		}
+		actual = strictNumUnitsInFormation(tt.formation, tt.find)
+		if actual != tt.strictResult {
+			t.Errorf("the number of total units in the formation was not calculated correctly in strict mode\nexpected: %v\nactual: %v", tt.result, actual)
+		}
+	}
+}
+
+func TestHasOnlyPlanes(t *testing.T) {
+	values := []struct {
+		formation map[string]int
+		result    bool
+	}{
+		{map[string]int{"fig": 2}, true},
+		{map[string]int{"bom": 3, "fig": 1}, true},
+		{map[string]int{"art": 3, "fig": 1}, false},
+		{map[string]int{"fig": 3, "+bom": 1}, true},
+		{map[string]int{"inf": 1, "fig": 3, "+bom": 1}, false},
+	}
+	for _, tt := range values {
+		actual := hasOnlyPlanes(tt.formation)
+		if actual != tt.result {
+			t.Errorf("The only planes result was incorrect\nunits: %v\nresult: %v", tt.formation, actual)
+		}
+	}
+}
+
+func TestCanUseAAA(t *testing.T) {
+	values := []struct {
+		attackers map[string]int
+		defenders map[string]int
+		result    bool
+	}{
+		{map[string]int{"tac": 2, "mec": 1, "art": 3}, map[string]int{"aaa": 1, "inf": 2}, true},
+		{map[string]int{"tan": 2, "mec": 1, "art": 3}, map[string]int{"aaa": 1, "inf": 2}, false},
+		{map[string]int{"fig": 2, "bom": 1, "art": 3}, map[string]int{"art": 1, "inf": 2}, false},
+		{map[string]int{"fig": 2, "bom": 1, "tan": 3}, map[string]int{"aaa": 1, "art": 2, "inf": 2}, true},
+	}
+	for _, tt := range values {
+		if canUseAAA(tt.attackers, tt.defenders) != tt.result {
+			t.Errorf("CanUseAAA marked incorrectly.\nattackers:%v\ndefenders: %v", tt.attackers, tt.defenders)
+		}
+	}
+}
+
+func TestKamikaze(t *testing.T) {
+	values := []struct {
+		defenders map[string]int
+		result    bool
+	}{
+		{map[string]int{"kam": 2, "mec": 1, "art": 3}, true},
+		{map[string]int{"tan": 2, "mec": 1, "art": 3}, false},
+		{map[string]int{"fig": 2, "bom": 1, "art": 3}, false},
+		{map[string]int{"fig": 2, "kam": 1, "tan": 3}, true},
+		// This is stupid but wtf
+		{map[string]int{"fig": 2, "+kam": 1, "tan": 3}, true},
+	}
+	for _, tt := range values {
+		if canKamikaze(tt.defenders) != tt.result {
+			t.Errorf("canKamikaze marked incorrectly.\ndefenders: %v", tt.defenders)
 		}
 	}
 }
