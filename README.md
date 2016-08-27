@@ -117,7 +117,7 @@ would really like to sacrifice some carriers and not take your cruisers or
 aircraft.
 
 Potentially I may work in an attacker and defender specific "value" model of
-loss which will factor in both cost and hit value of the piece.
+loss which will factor in both cost and hit value of the unit.
 
 **Note:**
 

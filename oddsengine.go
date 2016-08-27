@@ -17,9 +17,9 @@ var (
 	// ConflictProfile for the Summary. Default is 1000
 	iterations = 1000
 
-	// activePieces are the pieces available in the current game version
-	// default pieces are 1940 pieces.
-	activePieces = getPiecesForGame("1940")
+	// activeUnits are the units available in the current game version
+	// default units are 1940 units.
+	activeUnits = getUnitsForGame("1940")
 
 	// activeGame is the game current being run by the simulator
 	activeGame = "1940"
@@ -40,12 +40,12 @@ func init() {
 func GetSummary(attackers, defenders map[string]int) (*Summary, error) {
 	var err error
 
-	err = checkPieceValidity(attackers)
+	err = checkUnitValidity(attackers)
 	if err != nil {
 		return &Summary{}, err
 	}
 
-	err = checkPieceValidity(defenders)
+	err = checkUnitValidity(defenders)
 	if err != nil {
 		return &Summary{}, err
 	}
@@ -77,10 +77,10 @@ func SetMustTakeTerritory(a bool) {
 	mustTakeTerritory = a
 }
 
-// SetGame sets the game up internally. Altering piece makeup, and ool
+// SetGame sets the game up internally. Altering unit makeup, and ool
 func SetGame(g string) {
 	activeGame = g
-	activePieces = getPiecesForGame(g)
+	activeUnits = getUnitsForGame(g)
 	setupOol()
 }
 
@@ -131,10 +131,10 @@ func resolveConflict(a, d map[string]int, ool []string) *ConflictProfile {
 		// separately
 		var attackingHits int
 		var attackingSubHits int
-		var attackingAirHits int
+		var attackerAircraftHits int
 		var defendingHits int
 		var defendingSubHits int
-		var defendingAirHits int
+		var defenderAircraftHits int
 
 		/**
 		 * Pre Conflict Attacks / Defence
@@ -143,44 +143,43 @@ func resolveConflict(a, d map[string]int, ool []string) *ConflictProfile {
 		 * AAA guns, Kamikaze, Bombard etc.
 		 */
 		if len(profile.DefenderHits) == 0 {
-			if canKamikaze(defenders) {
+			/**
+			 * Run Kamikaze attacks.
+			 */
+			// This is partially inaccurate, the kamikaze hits are limited by
+			// the total number of hits available to be given on surface
+			// ships MAX. To be completely accurate reallly, we need to accept
+			// some form of input regarding which ships the kamikaze were
+			// assigned to, however that isn't within the scope ATM.
+			kamikazeHits := rollForUnitSlice(defenders, []string{"kam"}, "defend")
+			profile.KamikazeHits = kamikazeHits
 
-				// This is partially inaccurate, the kamikaze hits are limited by
-				// the total number of hits available to be given on surface
-				// ships MAX. To be completely accurate reallly, we need to accept
-				// some form of input regarding which ships the kamikaze were
-				// assigned to, however that isn't within the scope ATM.
-				kamikazeRollMap := getKamikazeRollMap(defenders)
-				kamikazeHits := calculateHits(kamikazeRollMap)
-				profile.KamikazeHits = kamikazeHits
-				if kamikazeHits > 0 {
-					profile.AttackerIpcLoss += takeCasualties(attackers, kamikazeHits, surfaceShips)
-				}
-
-				// kamikaze are a one time use so delete them here.
-				deleteUnitFromFormation(defenders, "kam")
+			if kamikazeHits > 0 {
+				profile.AttackerIpcLoss += takeCasualties(attackers, kamikazeHits, surfaceShips)
 			}
 
+			// kamikaze are a one time use so delete them here.
+			deleteUnitFromFormation(defenders, "kam")
+
+			/**
+			 * Run AAA Attacks
+			 */
 			// If we have AAA ability in the zone, we need to calculate those hits
 			// first, and resolve the casualties before the defender is able to
 			// fire back.
-			if canUseAAA(attackers, defenders) {
-				AAARollMap := getAAARollMap(attackers, defenders)
-				AAAHits := calculateHits(AAARollMap)
-				profile.AAAHits = AAAHits
+			AAARollMap := getAAARollMap(attackers, defenders)
+			AAAHits := calculateHits(AAARollMap)
+			profile.AAAHits = AAAHits
 
-				if AAAHits > 0 {
-					profile.AttackerIpcLoss += takeCasualties(attackers, AAAHits, aircraft)
-				}
+			if AAAHits > 0 {
+				profile.AttackerIpcLoss += takeCasualties(attackers, AAAHits, aircraft)
 			}
 
 			// Ships that are capable of bombardment must go in this phase. They
 			// do not prevent the hit defenders from attacking back, so we do
 			// not take casualties.
 			if canBombard(attackers) {
-				bombardRollMap := getBombardRollMap(attackers)
-				bombardHits := calculateHits(bombardRollMap)
-				attackingHits += bombardHits
+				attackingHits += rollForUnitSlice(attackers, bombardShips, "attack")
 
 				// We need to remove the bombardships from the formation right
 				// away to prevent them from getting hits assigned.
@@ -199,12 +198,8 @@ func resolveConflict(a, d map[string]int, ool []string) *ConflictProfile {
 
 		// initialize there variables, we will need to track how many subs the
 		// attacker and defender had before we take casualties
-		var attackerNumSubs int
-		var defenderNumSubs int
 		var attackerSupriseHits int
-		var attackerSubsLost int
 		var defenderSupriseHits int
-		var defenderSubsLost int
 
 		// Calculate Submarine Suprise attacks
 		attackerCanSuprise := canSupriseAttack(attackers, defenders)
@@ -216,27 +211,15 @@ func resolveConflict(a, d map[string]int, ool []string) *ConflictProfile {
 		// don't want the attacking hit to destroy the sub, not allowing it to
 		// get it's shot.
 		if attackerCanSuprise {
-			attackerNumSubs = attackers["sub"]
-			rm := createRollMap(map[string]int{"sub": attackers["sub"]}, "attack")
-			attackerSupriseHits = calculateHits(rm)
+			attackerSupriseHits = rollSubs(attackers, "attack")
 		}
 		if defenderCanSuprise {
-			defenderNumSubs = defenders["sub"]
-			rm := createRollMap(map[string]int{"sub": defenders["sub"]}, "defend")
-			defenderSupriseHits = calculateHits(rm)
+			defenderSupriseHits = rollSubs(defenders, "defend")
 		}
 
 		// After the hits are calculated, we may take the casualties.
-		if attackerSupriseHits > 0 {
-			s := defenders["sub"]
-			profile.DefenderIpcLoss += takeCasualties(defenders, attackerSupriseHits, ships)
-			defenderSubsLost = s - defenders["sub"]
-		}
-		if defenderSupriseHits > 0 {
-			s := attackers["sub"]
-			profile.AttackerIpcLoss += takeCasualties(attackers, defenderSupriseHits, ships)
-			attackerSubsLost = s - attackers["sub"]
-		}
+		profile.DefenderIpcLoss += takeCasualties(defenders, attackerSupriseHits, ships)
+		profile.AttackerIpcLoss += takeCasualties(attackers, defenderSupriseHits, ships)
 
 		/**
 		 * Generate standard combat roll map
@@ -251,25 +234,16 @@ func resolveConflict(a, d map[string]int, ool []string) *ConflictProfile {
 		 * depending on if we have special units
 		 */
 
-		// If the defender has AAA We need to reduce the number of rolls at the
-		// AAA hitValue
-		if numAAA, ok := d["aaa"]; ok {
-			defenderRollMap.Reduce(activePieces.Find("aaa").Defend, numAAA)
-		}
+		// Reduce the number of rolls at the AAA hitValue
+		defenderRollMap.RemoveUnits(defenders, []string{"aaa", "raaa"}, "defend")
 
 		// We need to reduce the number of rolls in the roll map to account for
 		// the subs that have already attacked.
 		if attackerCanSuprise {
-			reduction := attackerNumSubs - attackerSubsLost
-			if reduction > 0 {
-				attackerRollMap.Reduce(activePieces.Find("sub").Attack, reduction)
-			}
+			attackerRollMap.RemoveUnits(attackers, subs, "attack")
 		}
 		if defenderCanSuprise {
-			reduction := defenderNumSubs - defenderSubsLost
-			if reduction > 0 {
-				defenderRollMap.Reduce(activePieces.Find("sub").Defend, reduction)
-			}
+			defenderRollMap.RemoveUnits(defenders, subs, "defend")
 		}
 
 		/**
@@ -282,20 +256,33 @@ func resolveConflict(a, d map[string]int, ool []string) *ConflictProfile {
 		/**
 		 * Roll Attackers First
 		 */
+
+		// Roll for units who's hits may be limited. Aircraft first.
+
+		// Aircraft should only roll if there are units that they are able to
+		// hit
+		if !hasOnlySubs(defenders) || hasUnit(attackers, "des") {
+			attackerAircraftHits = rollAircraft(attackers, "attack")
+		}
+
+		// Remove the aircraft from the roll map so we don't roll for them in
+		// the later stages
+		attackerRollMap.RemoveUnits(attackers, aircraft, "attack")
+
+		// We need to know what the aircraft are able to hit. If they are limited
+		// they are unable to hit submarines
+		attackingAircraftOol := ool
 		if hasLimitedAircraft(attackers, defenders) {
-			rm := getAircraftRollMap(attackers, "attack")
-			attackingAirHits = calculateHits(rm)
-			for _, m := range rm {
-				attackerRollMap.Reduce(m.hitValue, m.num)
-			}
+			attackingAircraftOol = noSubOol
 		}
-		// We need to roll the subs separately from the other pieces, since they
+
+		// We need to roll the subs separately from the other units, since they
 		// cannot hit planes
-		if numSub, ok := attackers["sub"]; ok && !attackerCanSuprise {
-			rm := createRollMap(map[string]int{"sub": numSub}, "attack")
-			attackingSubHits = calculateHits(rm)
-			attackerRollMap.Reduce(activePieces.Find("sub").Attack, numSub)
+		if hasSub(attackers) && !attackerCanSuprise {
+			attackingSubHits = rollSubs(attackers, "attack")
+			attackerRollMap.RemoveUnits(attackers, subs, "attack")
 		}
+
 		// Calculate and record the attacking hits for the round.
 		attackingHits += calculateHits(attackerRollMap)
 
@@ -303,25 +290,36 @@ func resolveConflict(a, d map[string]int, ool []string) *ConflictProfile {
 		 * Roll Defenders Last
 		 */
 
-		if hasLimitedAircraft(defenders, attackers) {
-			rm := getAircraftRollMap(defenders, "defend")
-			defendingAirHits = calculateHits(rm)
-			for _, m := range rm {
-				defenderRollMap.Reduce(m.hitValue, m.num)
-			}
+		// Roll for units who's hits may be limited. Aircraft first.
+
+		// Aircraft should only roll if there are units that they are able to
+		// hit
+		if !hasOnlySubs(attackers) || hasUnit(defenders, "des") {
+			defenderAircraftHits = rollAircraft(defenders, "defend")
 		}
 
-		if numSub, ok := defenders["sub"]; ok && !defenderCanSuprise {
-			rm := createRollMap(map[string]int{"sub": numSub}, "defend")
-			defendingSubHits = calculateHits(rm)
-			defenderRollMap.Reduce(activePieces.Find("sub").Defend, numSub)
+		// Remove the aircraft from the roll map so we don't roll for them twice
+		defenderRollMap.RemoveUnits(defenders, aircraft, "defend")
+
+		// We need to know what the aircraft are able to hit. If they are limited
+		// they are unable to hit submarines
+		defendingAircraftOol := ool
+		if hasLimitedAircraft(defenders, attackers) {
+			defendingAircraftOol = noSubOol
+		}
+
+		if hasSub(defenders) && !defenderCanSuprise {
+			defendingSubHits = rollSubs(defenders, "defend")
+			defenderRollMap.RemoveUnits(defenders, subs, "defend")
 		}
 
 		defendingHits += calculateHits(defenderRollMap)
 
 		// Record data to the profile.
-		profile.DefenderHits = append(profile.DefenderHits, defendingHits+defenderSupriseHits+defendingSubHits+defendingAirHits)
-		profile.AttackerHits = append(profile.AttackerHits, attackingHits+attackerSupriseHits+attackingSubHits+attackingAirHits)
+		profile.DefenderHits = append(profile.DefenderHits,
+			defendingHits+defenderSupriseHits+defendingSubHits+defenderAircraftHits)
+		profile.AttackerHits = append(profile.AttackerHits,
+			attackingHits+attackerSupriseHits+attackingSubHits+attackerAircraftHits)
 
 		/**
 		 * Take Casualties
@@ -332,22 +330,13 @@ func resolveConflict(a, d map[string]int, ool []string) *ConflictProfile {
 
 		// First take casualties from the submarines. Their hits can only be
 		// applied to surface ships
-		if attackingSubHits > 0 {
-			profile.DefenderIpcLoss += takeCasualties(defenders, attackingSubHits, ships)
-		}
-		if defendingSubHits > 0 {
-			profile.AttackerIpcLoss += takeCasualties(attackers, defendingSubHits, ships)
-		}
-		if attackingAirHits > 0 {
-			profile.DefenderIpcLoss += takeCasualties(defenders, attackingAirHits, noSubOol)
-		}
-		if defendingAirHits > 0 {
-			profile.AttackerIpcLoss += takeCasualties(attackers, defendingAirHits, noSubOol)
-		}
+		profile.DefenderIpcLoss += takeCasualties(defenders, attackingSubHits, ships) +
+			takeCasualties(defenders, attackerAircraftHits, attackingAircraftOol) +
+			takeCasualties(defenders, attackingHits, ool)
 
-		// Take standard combat casualties now.
-		profile.DefenderIpcLoss += takeCasualties(defenders, attackingHits, ool)
-		profile.AttackerIpcLoss += takeCasualties(attackers, defendingHits, ool)
+		profile.AttackerIpcLoss += takeCasualties(attackers, defendingSubHits, ships) +
+			takeCasualties(attackers, defenderAircraftHits, defendingAircraftOol) +
+			takeCasualties(attackers, defendingHits, ool)
 
 	}
 
@@ -355,10 +344,10 @@ func resolveConflict(a, d map[string]int, ool []string) *ConflictProfile {
 	profile.Rounds = len(profile.DefenderHits)
 
 	if len(attackers) > 0 {
-		profile.AttackerPiecesRemaining = formationToSortedSlice(attackers)
+		profile.AttackerUnitsRemaining = formationToSortedSlice(attackers)
 	}
 	if len(defenders) > 0 {
-		profile.DefenderPiecesRemaining = formationToSortedSlice(defenders)
+		profile.DefenderUnitsRemaining = formationToSortedSlice(defenders)
 	}
 
 	// We record the conflict outcome onto the profile. Marked by
@@ -401,32 +390,37 @@ func multiRoll(num, hitValue int) (hits int) {
 // createRollMap will generate a RollMap from a given map of unit aliasas and
 // number of them. Calculates the roll map with a given "mode", specifically,
 // "attack" or "defend"
-func createRollMap(p map[string]int, mode string) (rollMap RollMap) {
-	rollMap = RollMap{}
-	for piece, num := range p {
-		if strings.HasPrefix(piece, "-") || strings.HasPrefix(piece, "+") {
-			piece = piece[1:]
-		}
+func createRollMap(f map[string]int, mode string) (rollMap RollMap) {
+	for alias, n := range f {
 		var hitValue int
 
 		shotsAtPlusOne := 0
-		pStruct := activePieces.Find(piece)
+		totalNumUnits := numAllUnitsInFormation(f, realAlias(alias))
 
-		hitValue = pStruct.Defend
+		hasModifiedUnits := totalNumUnits > n
+		isModifiedUnit := strings.HasPrefix(alias, "-") || strings.HasPrefix(alias, "+")
+
+		if hasModifiedUnits && isModifiedUnit {
+			continue
+		}
+
+		unit := activeUnits.Find(realAlias(alias))
+
+		hitValue = unit.Defend
 		if mode == "attack" {
-			hitValue = pStruct.Attack
+			hitValue = unit.Attack
 
-			if pStruct.PlusOneShots != nil {
-				shotsAtPlusOne = pStruct.PlusOneShots(p)
-				num = num - shotsAtPlusOne
+			if unit.PlusOneRolls != nil {
+				shotsAtPlusOne = unit.PlusOneRolls(f)
+				totalNumUnits = totalNumUnits - shotsAtPlusOne
 			}
 		}
 
 		if shotsAtPlusOne > 0 {
 			rollMap = rollMap.AddRoll(hitValue+1, shotsAtPlusOne)
 		}
-		if num > 0 {
-			rollMap = rollMap.AddRoll(hitValue, num)
+		if totalNumUnits > 0 {
+			rollMap = rollMap.AddRoll(hitValue, totalNumUnits)
 		}
 	}
 
@@ -448,58 +442,19 @@ func calculateHits(rollMap RollMap) (hits int) {
 	return hits
 }
 
-// getAircraftRollMap returns a roll map that encompases the aircraft only.
-//
-// @BUG because this method excludes ground troops, tactical bombers would not
-// get their full slate of bonuses in certain circumstances. This is not as
-// big of an issue however, because the primary purpose of this method, is to
-// roll aircraft separately, when they canot hit submarines. So the scenario
-// where we would want an aircraft exclusive rollmap will not involve tanks.
-func getAircraftRollMap(a map[string]int, mode string) RollMap {
-	manipulatedPlanes := make(map[string]int, len(aircraft))
-	for _, plane := range aircraft {
-		if _, ok := a[plane]; ok {
-			manipulatedPlanes[plane] = a[plane]
-		}
-	}
-
-	return createRollMap(manipulatedPlanes, mode)
-}
-
-// getBombardRollMap returns a rollmap of all available bombardable ships.
-//
-// Intentionally, we do not limit the number of bombard ships by any number of
-// land units. We assume correct input. This is because it's impossible at this
-// point to know which troops were offloaded via transport (The actual bombard
-// limit) and which were brought in via a land territory. Incorrect input will
-// lead to incorrect data.
-func getBombardRollMap(a map[string]int) RollMap {
-	manipulatedShips := make(map[string]int, len(bombardShips))
-
-	for _, ship := range bombardShips {
-		numShip := numAllUnitsInFormation(a, ship)
-		if numShip > 0 {
-			manipulatedShips[ship] = numShip
-		}
-	}
-
-	return createRollMap(manipulatedShips, "attack")
-}
-
-// getKamikaze uses the defending units to calculate the number of
-// rolls and the hit values that should be given to kamikaze
-func getKamikazeRollMap(d map[string]int) RollMap {
-	attackMap := make(map[string]int, 1)
-	attackMap["kam"] = numAllUnitsInFormation(d, "kam")
-
-	return createRollMap(attackMap, "defend")
-}
-
 // getAAARollMap uses the attackers and defenders to calculate the number of
 // rolls that should be given to the AAA
 func getAAARollMap(a, d map[string]int) RollMap {
 	var numPlanes int
-	numAAA := numAllUnitsInFormation(d, "aaa")
+
+	// We need to determine if we are rolling for standard AAA or if we have
+	// Radar assisted AAA guns
+	unitAlias := "aaa"
+	if _, hasRaaa := d["raaa"]; hasRaaa {
+		unitAlias = "raaa"
+	}
+
+	numAAA := numAllUnitsInFormation(d, unitAlias)
 
 	// Determine how many planes the attacker has in it's fleet
 	for _, plane := range aircraft {
@@ -515,21 +470,26 @@ func getAAARollMap(a, d map[string]int) RollMap {
 	}
 
 	// create a "fake" unit map to calculate hits with
-	manipulatedAAAPieces := map[string]int{
-		"aaa": numAAAShots,
+	aaaFormation := map[string]int{
+		unitAlias: numAAAShots,
 	}
-	return createRollMap(manipulatedAAAPieces, "defend")
+
+	return createRollMap(aaaFormation, "defend")
 }
 
 // takeCasualties removed units from the map in order of their value, and returns
 // the total cost of the casualties taken.
-func takeCasualties(units map[string]int, num int, ool []string) int {
+func takeCasualties(f map[string]int, num int, ool []string) int {
+	// If we get a casualty number of 0 just leave that shit alone.
+	if num <= 0 {
+		return 0
+	}
 
 	var ipcValueOfCasualties int
 	// Find the units in order of their casualty value
 
-	if hasUndamagedCapitalShips(units) {
-		capitalShipDamage := damageCapitalShips(units, num)
+	if hasUndamagedCapitalShips(f) {
+		capitalShipDamage := damageCapitalShips(f, num)
 		num = num - capitalShipDamage
 	}
 
@@ -539,27 +499,29 @@ func takeCasualties(units map[string]int, num int, ool []string) int {
 			break
 		}
 
+		// The unitIndex is the index within the passed in unit map.
 		// Depending on if the unit has a prefix or not, it's index may or may
 		// not be the unit alias directly.
 		unitIndex := u
 
-		// The piece that we want to grab out of the "pieces" slice needs to be
+		// The unmodifiedIndex is the index within the total game units.
+		// The unit that we want to grab out of the "units" slice needs to be
 		// recorded, this may change depending if we have a prefix.
-		piecesIndex := u
+		unmodifiedIndex := u
 
-		// If this piece is reserved, then the index within the pieces slice
+		// If this unit is reserved, then the index within the units slice
 		// is incorrect and we need to modify the lookup value to exclude the
 		// "+"
 		if strings.HasPrefix(unitIndex, "+") {
-			piecesIndex = unitIndex[1:]
+			unmodifiedIndex = unitIndex[1:]
 		}
 
 		// Check for the existence of the unit in the map.
-		numUnits, ok := units[unitIndex]
+		numUnits, ok := f[unitIndex]
 		if !ok {
 			// The unit may be prefixed as a damaged prefix so check if that is
 			// the case
-			if numUnits, ok = units["-"+unitIndex]; ok {
+			if numUnits, ok = f["-"+unitIndex]; ok {
 				// So we have a damaged unit here update the unitIndex to
 				// recognize that
 				unitIndex = "-" + unitIndex
@@ -573,12 +535,12 @@ func takeCasualties(units map[string]int, num int, ool []string) int {
 		// from the unit set and reduce our number to 0.
 		if numUnits <= num {
 			num = num - numUnits
-			ipcValueOfCasualties += (activePieces.Find(piecesIndex).Cost * numUnits)
+			ipcValueOfCasualties += (activeUnits.Find(unmodifiedIndex).Cost * numUnits)
 			// Remove the unit from the unit set completely.
-			delete(units, unitIndex)
+			delete(f, unitIndex)
 		} else {
-			ipcValueOfCasualties += (activePieces.Find(piecesIndex).Cost * num)
-			units[unitIndex] = units[unitIndex] - num
+			ipcValueOfCasualties += (activeUnits.Find(unmodifiedIndex).Cost * num)
+			f[unitIndex] = f[unitIndex] - num
 			num = 0
 		}
 	}
@@ -592,13 +554,13 @@ func isResolved(attackers, defenders map[string]int) (resolved bool) {
 		return true
 	}
 
-	_, defenderHasSub := defenders["sub"]
+	defenderHasSub := hasSub(defenders)
 
 	if hasOnlyPlanes(attackers) && (len(defenders) == 1 && defenderHasSub) {
 		return true
 	}
 
-	_, attackerHasSub := attackers["sub"]
+	attackerHasSub := hasSub(attackers)
 	if hasOnlyPlanes(defenders) && (len(attackers) == 1 && attackerHasSub) {
 		return true
 	}
@@ -610,6 +572,8 @@ func isResolved(attackers, defenders map[string]int) (resolved bool) {
 // identified by a "-" before the alias name, for example. `bat` is an undamaged
 // battleship. `-bat` is a damaged battleship. Returns the total number that
 // were damaged.
+// @TODO There is an error in here. We need to be able to assign damage to a
+// reserved capital ship. How do we handle a `-+bat` or a `+-bat`
 func damageCapitalShips(units map[string]int, hits int) (numDamaged int) {
 	for _, ship := range capitalShips {
 		// If we don't have this capital ship, move on
@@ -645,8 +609,12 @@ func damageCapitalShips(units map[string]int, hits int) (numDamaged int) {
 func hasUndamagedCapitalShips(units map[string]int) bool {
 	var a bool
 	for _, ship := range capitalShips {
-		// A rare circumstance where we ARE looking for an unprefixed unit.
-		if _, ok := units[ship]; ok {
+
+		// Find an undamaged capital ship. Can be reserved But can NOT be
+		// damaged obvs. So don't use the HasUnits method here
+		_, hasReserved := units["+"+ship]
+		_, hasStandard := units[ship]
+		if hasReserved || hasStandard {
 			a = true
 			break
 		}
@@ -657,14 +625,14 @@ func hasUndamagedCapitalShips(units map[string]int) bool {
 
 // canKamikaze returns whether or not the defender can kamikaze
 func canKamikaze(units map[string]int) bool {
-	return numAllUnitsInFormation(units, "kam") > 0
+	return hasUnit(units, "kam")
 }
 
 // attackerCanSupriseAttack lets us know if a conflict allows for a sub suprise
 // attack by an attacker
 func canSupriseAttack(a, b map[string]int) bool {
-	aHasSub := numAllUnitsInFormation(a, "sub") > 0
-	bHasDes := numAllUnitsInFormation(b, "des") > 0
+	aHasSub := hasSub(a)
+	bHasDes := hasUnit(b, "des")
 
 	return aHasSub && !bHasDes
 }
@@ -679,9 +647,7 @@ func canBombard(units map[string]int) bool {
 // canUseAAA lets the program know if the current set of attackers and
 // defenders are capable of using AAA before the start of the battle
 func canUseAAA(attackers, defenders map[string]int) bool {
-	_, ok := defenders["aaa"]
-
-	return ok && hasAircraft(attackers)
+	return (hasUnit(defenders, "aaa") || hasUnit(defenders, "raaa")) && hasAircraft(attackers)
 }
 
 // getTotalNumUnits returns the total number of units within a map of units
@@ -692,17 +658,95 @@ func getTotalNumUnits(u map[string]int) (num int) {
 	return num
 }
 
+// rollForUnit rolls all the units identified by a particular alias and returns
+// the number of hits.
+func rollForUnit(f map[string]int, unit *Unit, mode string) (hits int) {
+	numUnits := numAllUnitsInFormation(f, unit.Alias)
+
+	if mode == "attack" {
+		if unit.MultiRoll > 0 {
+			hits = rollMultiRollUnits(map[string]int{unit.Alias: numUnits}, mode)
+		} else {
+			rm := RollMap{}
+			var unitsAtPlusOne int
+			if unit.PlusOneRolls != nil {
+				unitsAtPlusOne = unit.PlusOneRolls(f)
+				numUnits = numUnits - unitsAtPlusOne
+			}
+
+			if unitsAtPlusOne > 0 {
+				rm = rm.AddRoll(unit.Attack+1, unitsAtPlusOne)
+			}
+			if numUnits > 0 {
+				rm = rm.AddRoll(unit.Attack, numUnits)
+			}
+			hits = calculateHits(rm)
+		}
+	} else {
+		rm := createRollMap(map[string]int{unit.Alias: numUnits}, mode)
+		hits = calculateHits(rm)
+	}
+
+	return hits
+}
+
+func rollForUnitSlice(f map[string]int, slice []string, mode string) (hits int) {
+	for _, alias := range slice {
+		if hasUnit(f, alias) {
+			unit := activeUnits.Find(realAlias(alias))
+			hits += rollForUnit(f, unit, mode)
+		}
+	}
+
+	return hits
+}
+
+// rollSubs is a convenienve method that rolls all the sub units and returns
+// the number of hits
+func rollSubs(a map[string]int, mode string) (hits int) {
+	return rollForUnitSlice(a, subs, mode)
+}
+
+// rollAircraft is a convenience method that rolls all the aircraft units and
+// returns the number of hits
+func rollAircraft(a map[string]int, mode string) (hits int) {
+	return rollForUnitSlice(a, aircraft, mode)
+}
+
+// rollMultiRollUnits rolls for all the units who get multiple dice per attack
+// roll. Selecting the highest of the die to score a hit.
+func rollMultiRollUnits(a map[string]int, mode string) (hits int) {
+	for _, alias := range multiRollUnits {
+		if hasUnit(a, alias) {
+			// We must run each of these units separately to keep track
+			// of their rolls. So we will iterate as many units as we have.
+			iterations := numAllUnitsInFormation(a, alias)
+			numDie := activeUnits.Find(realAlias(alias)).MultiRoll
+			for i := 0; i < iterations; i++ {
+				// Maybe a little bit of a hack. create a roll map for each
+				// iteration through. if any hits come back, record just 1 hit.
+				// since we are rolling multiple die but for only one unit.
+				rm := createRollMap(map[string]int{alias: numDie}, mode)
+				h := calculateHits(rm)
+				if h > 0 {
+					hits++
+				}
+			}
+		}
+	}
+
+	return hits
+}
+
 // conflictIsAutoKill returns whether or not the defender has any units
 // capable of putting up a defensive hit. AAA is not a defending unit.
 func conflictIsAutoKill(d, a map[string]int, firstRound bool) (autoKill bool) {
 	autoKill = true
-	for u := range d {
-		if strings.HasPrefix(u, "-") || strings.HasPrefix(u, "+") {
-			u = u[1:]
-		}
+	for alias := range d {
+		alias = realAlias(alias)
 		// The AAA is a special in that while it has a defend value, does
 		// not actually get a defend shot in the combat phase.
-		if u == "aaa" {
+		if alias == "aaa" || alias == "raaa" {
 			// AAA only applies to the first round
 			if !firstRound {
 				continue
@@ -719,7 +763,7 @@ func conflictIsAutoKill(d, a map[string]int, firstRound bool) (autoKill bool) {
 			continue
 		}
 
-		if activePieces.Find(u).Defend > 0 {
+		if activeUnits.Find(alias).Defend > 0 {
 			autoKill = false
 			break
 		}
@@ -747,69 +791,35 @@ func reserveHighestValueLandUnit(units map[string]int) {
 	}
 }
 
-// customizeOol takes the system's baseOol and customizes it for the particular
-// pieces that have been passed in. The primary function in the real world is
-// that it will add all reserved attackers and defenders to the appropriate
-// spot in the ool, and add AAA to the end of the ool since, AAA must be taken
-// last
-func customizeOol(attackers, defenders map[string]int) []string {
-	ool := make([]string, len(baseOol))
-	copy(ool, baseOol)
-
-	// We need to see all reserved attackers and add them to the end of the ool
-	for alias := range attackers {
-		if strings.HasPrefix(alias, "+") {
-			ool = append(ool, alias)
-		}
-	}
-
-	// We need to see all reserved defenders and add them to the end of the ool
-	// Skipping those which have already been added
-	for alias := range defenders {
-		if strings.HasPrefix(alias, "+") {
-			if !sliceHas(ool, alias) {
-				ool = append(ool, alias)
-			}
-		}
-	}
-
-	// AAA Is always the last thing taken in any conflict
-	if activePieces.HasPiece("aaa") {
-		ool = append(ool, "aaa")
-	}
-
-	return ool
-}
-
 // sliceHas let's me know if a slice of strings has a particular value
-func sliceHas(s []string, value string) bool {
+func sliceHas(s []string, alias string) bool {
+	if strings.HasPrefix(alias, "-") || strings.HasPrefix(alias, "+") {
+		alias = alias[1:]
+	}
 	for _, a := range s {
-		if a == value {
+		if a == alias {
 			return true
 		}
 	}
 	return false
 }
 
-// checkPieceValidity determines if all the passed in pieces are valid for the
+// checkUnitValidity determines if all the passed in units are valid for the
 // particular game that is being simulated. If not valid, will return an error
-// with a message including the pieces that are invalid.
-func checkPieceValidity(p map[string]int) error {
+// with a message including the units that are invalid.
+func checkUnitValidity(p map[string]int) error {
 	var invalid []string
 	for alias := range p {
-		if strings.HasPrefix(alias, "+") || strings.HasPrefix(alias, "-") {
+		if strings.HasPrefix(alias, "-") || strings.HasPrefix(alias, "+") {
 			alias = alias[1:]
 		}
-		if activePieces.HasPiece(alias) {
-			continue
+		if !activeUnits.HasUnit(alias) {
+			invalid = append(invalid, alias)
 		}
-
-		invalid = append(invalid, alias)
-
 	}
 
 	if len(invalid) > 0 {
-		return &InvalidPieceError{fmt.Sprintf("\"%v\"", strings.Join(invalid, "\", \""))}
+		return &InvalidUnitError{fmt.Sprintf("\"%v\"", strings.Join(invalid, "\", \""))}
 	}
 
 	return nil
@@ -818,10 +828,18 @@ func checkPieceValidity(p map[string]int) error {
 // hasOnlyPlanes returns true if the formation contains only planes
 func hasOnlyPlanes(u map[string]int) bool {
 	for alias := range u {
-		if strings.HasPrefix(alias, "-") || strings.HasPrefix(alias, "+") {
-			alias = alias[1:]
-		}
 		if has := sliceHas(aircraft, alias); !has {
+			return false
+		}
+	}
+
+	return true
+}
+
+// hasOnlySubs returns true if the formation contains only subs
+func hasOnlySubs(u map[string]int) bool {
+	for alias := range u {
+		if has := sliceHas(subs, alias); !has {
 			return false
 		}
 	}
@@ -831,43 +849,52 @@ func hasOnlyPlanes(u map[string]int) bool {
 
 // hasGroundUnits returns true if the formation contains any ground units
 func hasGroundUnits(u map[string]int) bool {
-	for alias := range u {
-		if strings.HasPrefix(alias, "-") || strings.HasPrefix(alias, "+") {
-			alias = alias[1:]
-		}
-		if has := sliceHas(landTroops, alias); has {
+	for _, unit := range landTroops {
+		if hasUnit(u, unit) {
 			return true
 		}
 	}
-
 	return false
+}
+
+// hasSub returns true if the formation contains any submarines
+func hasSub(u map[string]int) bool {
+	for _, unit := range subs {
+		if hasUnit(u, unit) {
+			return true
+		}
+	}
+	return false
+}
+
+// hasUnit determines if a unit exists in a formation. The unit may be damaged
+// or reserved and still return true.
+func hasUnit(units map[string]int, alias string) bool {
+	_, has := units[alias]
+	_, hasReserved := units["+"+alias]
+	_, hasDamaged := units["-"+alias]
+
+	return has || hasReserved || hasDamaged
+
 }
 
 // hasAircraft returns true if the formation contains any aircraft
 func hasAircraft(u map[string]int) bool {
-	for alias := range u {
-		if strings.HasPrefix(alias, "-") || strings.HasPrefix(alias, "+") {
-			alias = alias[1:]
-		}
-		if has := sliceHas(aircraft, alias); has {
+	for _, unit := range aircraft {
+		if hasUnit(u, unit) {
 			return true
 		}
 	}
-
 	return false
 }
 
 // hasBombardShips returns true if the formation contains any aircraft
 func hasBombardShips(u map[string]int) bool {
-	for alias := range u {
-		if strings.HasPrefix(alias, "-") || strings.HasPrefix(alias, "+") {
-			alias = alias[1:]
-		}
-		if has := sliceHas(bombardShips, alias); has {
+	for _, unit := range bombardShips {
+		if hasUnit(u, unit) {
 			return true
 		}
 	}
-
 	return false
 }
 
@@ -882,20 +909,15 @@ func deleteUnitFromFormation(formation map[string]int, unit string) {
 // hasLimitedAircraft returns true if the first formation has aircraft which can
 // not hit subs in the second formation.
 func hasLimitedAircraft(a, b map[string]int) bool {
-	var hasPlane bool
-	for _, plane := range aircraft {
-		if _, ok := a[plane]; ok {
-			hasPlane = true
-			break
-		}
+
+	if !hasAircraft(a) {
+		return false
 	}
 
-	if !hasPlane {
+	if !hasSub(b) {
 		return false
 	}
-	if _, ok := b["sub"]; !ok {
-		return false
-	}
+
 	if _, ok := a["des"]; ok {
 		return false
 	}
@@ -922,14 +944,6 @@ func formationToSortedSlice(f map[string]int) []map[string]int {
 	return ss
 }
 
-// strictNumUnitsInFormation return the number of units matching a particular
-// alias within the formation, Does NOT include damaged and reserved totals.
-func strictNumUnitsInFormation(formation map[string]int, alias string) (num int) {
-	num, _ = formation[alias]
-
-	return num
-}
-
 // numAllUnitsInFormation return the TOTAL number of units matching a particular
 // alias within the formation. Including damaged and reserved units.
 func numAllUnitsInFormation(formation map[string]int, alias string) (num int) {
@@ -938,4 +952,13 @@ func numAllUnitsInFormation(formation map[string]int, alias string) (num int) {
 	damagedNum, _ := formation["-"+alias]
 
 	return num + reservedNum + damagedNum
+}
+
+// realAlias returns the actual alias of a unit. Trimming any modifiers
+func realAlias(alias string) string {
+	if strings.HasPrefix(alias, "-") || strings.HasPrefix(alias, "+") {
+		alias = alias[1:]
+	}
+
+	return alias
 }

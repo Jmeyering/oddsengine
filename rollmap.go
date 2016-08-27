@@ -60,6 +60,35 @@ func (r RollMap) Reduce(hitValue, num int) (newMap RollMap) {
 	return r.AddRoll(hitValue, num*-1)
 }
 
+// RemoveUnits reduces the roll map by the passed in slice of units for the given.
+// mode. Uses the formation to determine what numbers to remove
+func (r RollMap) RemoveUnits(f map[string]int, units []string, mode string) {
+	for _, alias := range units {
+		if hasUnit(f, alias) {
+			unit := activeUnits.Find(realAlias(alias))
+
+			totalNumberUnits := numAllUnitsInFormation(f, alias)
+			var unitsAtPlusOne int
+
+			reductionHitValue := unit.Defend
+
+			if mode == "attack" {
+				reductionHitValue = unit.Attack
+
+				if unit.PlusOneRolls != nil {
+					unitsAtPlusOne = unit.PlusOneRolls(f)
+					totalNumberUnits = totalNumberUnits - unitsAtPlusOne
+				}
+			}
+
+			r.Reduce(reductionHitValue, totalNumberUnits)
+			if unitsAtPlusOne > 0 {
+				r.Reduce(reductionHitValue+1, unitsAtPlusOne)
+			}
+		}
+	}
+}
+
 // HasValue returns whether or not a RollMap has an entry for a RollValue with a
 // hitValue matching the passed in num.
 func (r RollMap) HasValue(num int) (has bool) {

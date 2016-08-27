@@ -17,11 +17,11 @@ type ConflictProfile struct {
 	// The number of IPC's that the defender lost in the conflict
 	DefenderIpcLoss int
 
-	// Number of Attacking Pieces Remaining at the end of the Conflict
-	AttackerPiecesRemaining []map[string]int
+	// Number of Attacking Units Remaining at the end of the Conflict
+	AttackerUnitsRemaining []map[string]int
 
-	// Number of Defending Pieces Remaining at the end of the Conflict
-	DefenderPiecesRemaining []map[string]int
+	// Number of Defending Units Remaining at the end of the Conflict
+	DefenderUnitsRemaining []map[string]int
 
 	// AAA Hits represent the number of AAA hits for the conflict
 	AAAHits int

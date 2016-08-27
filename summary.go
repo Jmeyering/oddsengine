@@ -33,25 +33,25 @@ type Summary struct {
 	// DefenderAvgIpcLoss The number of IPC's the defender loses on average
 	DefenderAvgIpcLoss float64 `json:"defenderAvgIpcLoss"`
 
-	// AttackerPiecesRemaining represents all the remaining pieces at the end
-	// of conflict. The pieces are represented by a string and the number of
+	// AttackerUnitsRemaining represents all the remaining units at the end
+	// of conflict. The units are represented by a string and the number of
 	// times that that formation remained at the end of the conflict is the
 	// value
-	AttackerPiecesRemaining map[string]int `json:"attackerPiecesRemaining"`
+	AttackerUnitsRemaining map[string]int `json:"attackerUnitsRemaining"`
 
-	// DefenderPiecesRemaining represents all the remaining pieces at the end
-	// of conflict. The pieces are represented by a string and the number of
+	// DefenderUnitsRemaining represents all the remaining units at the end
+	// of conflict. The units are represented by a string and the number of
 	// times that that formation remained at the end of the conflict is the
 	// value
-	DefenderPiecesRemaining map[string]int `json:"defenderPiecesRemaining"`
+	DefenderUnitsRemaining map[string]int `json:"defenderUnitsRemaining"`
 }
 
 // generateSummary Creates a summary from a slice of profiles.
 func generateSummary(p []ConflictProfile) *Summary {
 
 	var summary Summary
-	summary.AttackerPiecesRemaining = map[string]int{}
-	summary.DefenderPiecesRemaining = map[string]int{}
+	summary.AttackerUnitsRemaining = map[string]int{}
+	summary.DefenderUnitsRemaining = map[string]int{}
 	var totalRounds float64
 	var totalAAAHits float64
 	var totalKamikazeHits float64
@@ -67,22 +67,22 @@ func generateSummary(p []ConflictProfile) *Summary {
 		} else if profile.Outcome == 1 {
 			totalAttackerWins++
 
-			attackerRemainingString := formationSliceToString(profile.AttackerPiecesRemaining)
+			attackerRemainingString := formationSliceToString(profile.AttackerUnitsRemaining)
 
-			if _, ok := summary.AttackerPiecesRemaining[attackerRemainingString]; ok {
-				summary.AttackerPiecesRemaining[attackerRemainingString]++
+			if _, ok := summary.AttackerUnitsRemaining[attackerRemainingString]; ok {
+				summary.AttackerUnitsRemaining[attackerRemainingString]++
 			} else {
-				summary.AttackerPiecesRemaining[attackerRemainingString] = 1
+				summary.AttackerUnitsRemaining[attackerRemainingString] = 1
 			}
 		} else if profile.Outcome == -1 {
 			totalDefenderWins++
 
-			defenderRemainingString := formationSliceToString(profile.DefenderPiecesRemaining)
+			defenderRemainingString := formationSliceToString(profile.DefenderUnitsRemaining)
 
-			if _, ok := summary.DefenderPiecesRemaining[defenderRemainingString]; ok {
-				summary.DefenderPiecesRemaining[defenderRemainingString]++
+			if _, ok := summary.DefenderUnitsRemaining[defenderRemainingString]; ok {
+				summary.DefenderUnitsRemaining[defenderRemainingString]++
 			} else {
-				summary.DefenderPiecesRemaining[defenderRemainingString] = 1
+				summary.DefenderUnitsRemaining[defenderRemainingString] = 1
 			}
 		}
 

@@ -6,28 +6,28 @@ import (
 	"testing"
 )
 
-func TestPieceSwitching(t *testing.T) {
+func TestUnitSwitching(t *testing.T) {
 	values := []struct {
-		game   string
-		pieces []string
+		game  string
+		units []string
 	}{
 		{"1941", []string{"inf", "sub", "tan", "des", "fig", "car", "bom", "bat"}},
 		{"1942", []string{"inf", "art", "sub", "tan", "des", "fig", "cru", "bom", "car", "bat", "aaa"}},
-		{"1940", []string{"kam", "inf", "mec", "art", "sub", "tan", "des", "fig", "tac", "cru", "bom", "car", "bat", "aaa"}},
+		{"1940", []string{"kam", "inf", "mec", "imec", "art", "aart", "raaa", "sub", "ssub", "tan", "des", "fig", "jfig", "tac", "cru", "hbom", "bom", "car", "bat", "aaa"}},
 	}
 	for _, tt := range values {
 		SetGame(tt.game)
-		sort.Sort(ByCost{activePieces})
-		actual := piecesToSlice(activePieces)
-		if !reflect.DeepEqual(tt.pieces, actual) {
-			t.Errorf("Pieces for game %v not generated correctly\nexpected: %v\nactual: %v", tt.game, tt.pieces, actual)
+		sort.Sort(ByCost{activeUnits})
+		actual := unitsToSlice(activeUnits)
+		if !reflect.DeepEqual(tt.units, actual) {
+			t.Errorf("Units for game %v not generated correctly\nexpected: %v\nactual: %v", tt.game, tt.units, actual)
 		}
 	}
 }
 
-func TestPiecesSorting(t *testing.T) {
+func TestUnitsSorting(t *testing.T) {
 	var actual []string
-	pieces := Pieces{
+	units := Units{
 		{
 			Alias:  "inf",
 			Name:   "Infantry",
@@ -77,33 +77,33 @@ func TestPiecesSorting(t *testing.T) {
 	byAttackingOrder := []string{"inf", "car", "art", "cru", "bat"}
 	byDefendingOrder := []string{"inf", "art", "car", "cru", "bat"}
 
-	sort.Sort(ByCost{pieces})
-	actual = piecesToSlice(pieces)
+	sort.Sort(ByCost{units})
+	actual = unitsToSlice(units)
 
 	if !reflect.DeepEqual(actual, byValueOrder) {
-		t.Errorf("sorting pieces by value is not working\nexpected: %v\nactual: %v", byValueOrder, actual)
+		t.Errorf("sorting units by value is not working\nexpected: %v\nactual: %v", byValueOrder, actual)
 	}
 
-	sort.Sort(ByAttackingPower{pieces})
-	actual = piecesToSlice(pieces)
+	sort.Sort(ByAttackingPower{units})
+	actual = unitsToSlice(units)
 
 	if !reflect.DeepEqual(actual, byAttackingOrder) {
-		t.Errorf("sorting pieces by attack is not working\nexpected: %v\nactual: %v", byAttackingOrder, actual)
+		t.Errorf("sorting units by attack is not working\nexpected: %v\nactual: %v", byAttackingOrder, actual)
 	}
 
-	sort.Sort(ByDefendingPower{pieces})
-	actual = piecesToSlice(pieces)
+	sort.Sort(ByDefendingPower{units})
+	actual = unitsToSlice(units)
 
 	if !reflect.DeepEqual(actual, byDefendingOrder) {
-		t.Errorf("sorting pieces by defence is not working\nexpected: %v\nactual: %v", byDefendingOrder, actual)
+		t.Errorf("sorting units by defence is not working\nexpected: %v\nactual: %v", byDefendingOrder, actual)
 	}
 
 }
 
-func piecesToSlice(p Pieces) []string {
+func unitsToSlice(p Units) []string {
 	ps := []string{}
-	for _, piece := range p {
-		ps = append(ps, piece.Alias)
+	for _, unit := range p {
+		ps = append(ps, unit.Alias)
 	}
 
 	return ps
