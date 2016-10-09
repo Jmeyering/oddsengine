@@ -791,8 +791,8 @@ func reserveHighestValueLandUnit(units map[string]int) {
 	}
 }
 
-// sliceHas let's me know if a slice of strings has a particular value
-func sliceHas(s []string, alias string) bool {
+// sliceHasUnit let's me know if a slice of strings has a particular value
+func sliceHasUnit(s []string, alias string) bool {
 	if strings.HasPrefix(alias, "-") || strings.HasPrefix(alias, "+") {
 		alias = alias[1:]
 	}
@@ -804,9 +804,9 @@ func sliceHas(s []string, alias string) bool {
 	return false
 }
 
-// sliceHasStrict let's me know if a slice of strings has a particular value,
+// sliceHasValue let's me know if a slice of strings has a particular value,
 // does not check for modifiers
-func sliceHasStrict(s []string, alias string) bool {
+func sliceHasValue(s []string, alias string) bool {
 	for _, a := range s {
 		if a == alias {
 			return true
@@ -839,7 +839,7 @@ func checkUnitValidity(p map[string]int) error {
 // hasOnlyPlanes returns true if the formation contains only planes
 func hasOnlyPlanes(u map[string]int) bool {
 	for alias := range u {
-		if has := sliceHas(aircraft, alias); !has {
+		if has := sliceHasUnit(aircraft, alias); !has {
 			return false
 		}
 	}
@@ -850,7 +850,7 @@ func hasOnlyPlanes(u map[string]int) bool {
 // hasOnlySubs returns true if the formation contains only subs
 func hasOnlySubs(u map[string]int) bool {
 	for alias := range u {
-		if has := sliceHas(subs, alias); !has {
+		if has := sliceHasUnit(subs, alias); !has {
 			return false
 		}
 	}

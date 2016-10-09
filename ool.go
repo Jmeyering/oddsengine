@@ -112,7 +112,7 @@ func customizeOol(attackers, defenders map[string]int) []string {
 	// We need to see all reserved defenders and add them to the end of the ool
 	// Skipping those which have already been added
 	for alias := range defenders {
-		if strings.HasPrefix(alias, "+") && !sliceHasStrict(ool, alias) {
+		if strings.HasPrefix(alias, "+") && !sliceHasValue(ool, alias) {
 			ool = append(ool, alias)
 		}
 	}
