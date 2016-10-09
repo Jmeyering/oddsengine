@@ -497,6 +497,25 @@ func TestConflictResolution(t *testing.T) {
 			},
 			false,
 		},
+		// This check makes sure that reserved defending units actually get reserved
+		{
+			map[string]int{"tac": 10, "cru": 1},
+			map[string]int{"car": 1, "+des": 1},
+			"1940",
+			1,
+			ConflictProfile{
+				Rounds:                 1,
+				AttackerHits:           []int{6},
+				DefenderHits:           []int{2},
+				AttackerIpcLoss:        22,
+				DefenderIpcLoss:        24,
+				AttackerUnitsRemaining: formationToSortedSlice(map[string]int{"cru": 1, "tac": 8}),
+				AAAHits:                0,
+				KamikazeHits:           0,
+				Outcome:                1,
+			},
+			false,
+		},
 	}
 	for _, tt := range values {
 		SetGame(tt.game)

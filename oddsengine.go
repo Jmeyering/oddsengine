@@ -804,6 +804,17 @@ func sliceHas(s []string, alias string) bool {
 	return false
 }
 
+// sliceHasStrict let's me know if a slice of strings has a particular value,
+// does not check for modifiers
+func sliceHasStrict(s []string, alias string) bool {
+	for _, a := range s {
+		if a == alias {
+			return true
+		}
+	}
+	return false
+}
+
 // checkUnitValidity determines if all the passed in units are valid for the
 // particular game that is being simulated. If not valid, will return an error
 // with a message including the units that are invalid.
