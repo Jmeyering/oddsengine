@@ -638,7 +638,9 @@ func canSupriseAttack(a, b map[string]int) bool {
 }
 
 // canBombard lets us know if the units brought in allow for an offshore
-// bombardment
+// bombardment. There is an issue here, if an end user sends through a ship as
+// a bombard against a land unit, the conflict will proceed like a normal
+// conflict. I'm calling this, however, "not a bug" but a user error.
 func canBombard(units map[string]int) bool {
 
 	return hasGroundUnits(units) && hasBombardShips(units)
