@@ -56,8 +56,16 @@ func GetSummary(attackers, defenders map[string]int) (*Summary, error) {
 	}
 
 	ool := customizeOol(attackers, defenders)
+	ch := make(chan ConflictProfile, iterations)
+
 	for i := 0; i < iterations; i++ {
-		profiles = append(profiles, *resolveConflict(attackers, defenders, ool))
+		go func() {
+			ch <- *resolveConflict(attackers, defenders, ool)
+		}()
+	}
+
+	for i := 0; i < iterations; i++ {
+		profiles = append(profiles, <-ch)
 	}
 	return generateSummary(profiles), nil
 }
