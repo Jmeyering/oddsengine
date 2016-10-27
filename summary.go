@@ -9,6 +9,9 @@ import (
 // Summary is a type which represents the an averaged results of multiple
 // conflicts.
 type Summary struct {
+	// TotalSimulations The number of simulations that have been ran
+	TotalSimulations int `json:"totalSimulations"`
+
 	// AverageRounds The number of rounds on average a conflict lasted.
 	AverageRounds float64 `json:"averageRounds"`
 
@@ -52,6 +55,8 @@ func generateSummary(p []ConflictProfile) *Summary {
 	var summary Summary
 	summary.AttackerUnitsRemaining = map[string]int{}
 	summary.DefenderUnitsRemaining = map[string]int{}
+	summary.TotalSimulations = len(p)
+
 	var totalRounds float64
 	var totalAAAHits float64
 	var totalKamikazeHits float64
