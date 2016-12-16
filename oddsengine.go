@@ -323,11 +323,12 @@ func resolveConflict(a, d map[string]int, ool []string) *ConflictProfile {
 
 		defendingHits += calculateHits(defenderRollMap)
 
+		totalDefenderHits := defendingHits + defenderSupriseHits + defendingSubHits + defenderAircraftHits
+		totalAttackerHits := attackingHits + attackerSupriseHits + attackingSubHits + attackerAircraftHits
+
 		// Record data to the profile.
-		profile.DefenderHits = append(profile.DefenderHits,
-			defendingHits+defenderSupriseHits+defendingSubHits+defenderAircraftHits)
-		profile.AttackerHits = append(profile.AttackerHits,
-			attackingHits+attackerSupriseHits+attackingSubHits+attackerAircraftHits)
+		profile.DefenderHits = append(profile.DefenderHits, totalDefenderHits)
+		profile.AttackerHits = append(profile.AttackerHits, totalAttackerHits)
 
 		/**
 		 * Take Casualties

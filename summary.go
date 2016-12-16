@@ -36,6 +36,11 @@ type Summary struct {
 	// DefenderAvgIpcLoss The number of IPC's the defender loses on average
 	DefenderAvgIpcLoss float64 `json:"defenderAvgIpcLoss"`
 
+	// FirstRoundResults is the array of first round data. Represents the
+	// number of hits that an attacker and defender get on the first round,
+	// the frequency of such a result, and the victory result of that conflict.
+	FirstRoundResults FirstRoundResultCollection `json:"firstRoundResults"`
+
 	// AttackerUnitsRemaining represents all the remaining units at the end
 	// of conflict. The units are represented by a string and the number of
 	// times that that formation remained at the end of the conflict is the
@@ -67,6 +72,7 @@ func generateSummary(p []ConflictProfile) *Summary {
 	var totalDefenderIpcLoss float64
 
 	for _, profile := range p {
+
 		if profile.Outcome == 0 {
 			totalDraw++
 		} else if profile.Outcome == 1 {
@@ -90,6 +96,21 @@ func generateSummary(p []ConflictProfile) *Summary {
 				summary.DefenderUnitsRemaining[defenderRemainingString] = 1
 			}
 		}
+
+		firstRoundResult := FirstRoundResult{
+			AttackerHits: profile.AttackerHits[0],
+			DefenderHits: profile.DefenderHits[0],
+			Frequency:    1,
+		}
+
+		if profile.Outcome == 0 {
+			firstRoundResult.Draw = 1
+		} else if profile.Outcome == 1 {
+			firstRoundResult.AttackerWin = 1
+		} else {
+			firstRoundResult.DefenderWin = 1
+		}
+		summary.FirstRoundResults = summary.FirstRoundResults.Add(firstRoundResult)
 
 		totalRounds += float64(profile.Rounds)
 		totalAttackerIpcLoss += float64(profile.AttackerIpcLoss)
