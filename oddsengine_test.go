@@ -222,24 +222,47 @@ func TestTacPlusOneFunc(t *testing.T) {
 
 func TestRollMapper(t *testing.T) {
 	values := []struct {
+		game     string
 		units    map[string]int
 		mode     string
 		expected RollMap
 	}{
-		{map[string]int{"tac": 2, "mec": 1, "art": 3}, "attack", RollMap{{2, 4}, {3, 2}}},
-		{map[string]int{"tac": 3, "fig": 1, "tan": 1}, "attack", RollMap{{3, 3}, {4, 2}}},
-		{map[string]int{"sub": 3, "car": 1, "bat": 1, "des": 2}, "defend", RollMap{{1, 3}, {2, 3}, {4, 1}}},
-		{map[string]int{"sub": 3, "car": 1, "bat": 1, "des": 2}, "attack", RollMap{{0, 1}, {2, 5}, {4, 1}}},
-		{map[string]int{"inf": 8, "art": 10, "mec": 5, "fig": 2}, "attack", RollMap{{1, 3}, {2, 20}, {3, 2}}},
-		{map[string]int{"kam": 1, "des": 4, "car": 1}, "defend", RollMap{{2, 6}}},
-		{map[string]int{"art": 6, "inf": 4, "+inf": 3}, "attack", RollMap{{1, 1}, {2, 12}}},
-		{map[string]int{"art": 6, "mec": 4, "+mec": 3}, "attack", RollMap{{1, 1}, {2, 12}}},
-		{map[string]int{"tan": 6, "tac": 4, "+tac": 3}, "attack", RollMap{{3, 7}, {4, 6}}},
-		{map[string]int{"tan": 1, "art": 2, "imec": 2, "inf": 1, "+inf": 2}, "attack", RollMap{{1, 2}, {2, 5}, {3, 1}}},
-		{map[string]int{"tan": 1, "art": 2, "imec": 2, "inf": 1, "+inf": 2}, "attack", RollMap{{1, 2}, {2, 5}, {3, 1}}},
-		{map[string]int{"jfig": 2, "car": 1, "sub": 1, "hbom": 2}, "attack", RollMap{{0, 1}, {2, 1}, {4, 4}}},
+		{"1940", map[string]int{"tac": 2, "mec": 1, "art": 3}, "attack", RollMap{{2, 4}, {3, 2}}},
+		{"1940", map[string]int{"tac": 3, "fig": 1, "tan": 1}, "attack", RollMap{{3, 3}, {4, 2}}},
+		{"1940", map[string]int{"sub": 3, "car": 1, "bat": 1, "des": 2}, "defend", RollMap{{1, 3}, {2, 3}, {4, 1}}},
+		{"1940", map[string]int{"sub": 3, "car": 1, "bat": 1, "des": 2}, "attack", RollMap{{0, 1}, {2, 5}, {4, 1}}},
+		{"1940", map[string]int{"inf": 8, "art": 10, "mec": 5, "fig": 2}, "attack", RollMap{{1, 3}, {2, 20}, {3, 2}}},
+		{"1940", map[string]int{"kam": 1, "des": 4, "car": 1}, "defend", RollMap{{2, 6}}},
+		{"1940", map[string]int{"art": 6, "inf": 4, "+inf": 3}, "attack", RollMap{{1, 1}, {2, 12}}},
+		{"1940", map[string]int{"art": 6, "mec": 4, "+mec": 3}, "attack", RollMap{{1, 1}, {2, 12}}},
+		{"1940", map[string]int{"tan": 6, "tac": 4, "+tac": 3}, "attack", RollMap{{3, 7}, {4, 6}}},
+		{"1940", map[string]int{"tan": 1, "art": 2, "imec": 2, "inf": 3}, "attack", RollMap{{1, 2}, {2, 5}, {3, 1}}},
+		{"1940", map[string]int{"tan": 1, "art": 2, "imec": 2, "inf": 1, "+inf": 2}, "attack", RollMap{{1, 2}, {2, 5}, {3, 1}}},
+		{"1940", map[string]int{"jfig": 2, "car": 1, "sub": 1, "hbom": 2}, "attack", RollMap{{0, 1}, {2, 1}, {4, 4}}},
+
+		// Deluxe Standard Units
+		{"deluxe", map[string]int{"inf": 2, "hif": 1}, "attack", RollMap{{1, 2}, {2, 1}}},
+		{"deluxe", map[string]int{"inf": 1, "+inf": 1, "hif": 1}, "attack", RollMap{{1, 2}, {2, 1}}},
+		{"deluxe", map[string]int{"inf": 1, "+inf": 1, "hif": 1, "+hif": 1}, "attack", RollMap{{1, 2}, {2, 2}}},
+
+		// Deluxe combined arms.
+		{"deluxe", map[string]int{"sbm": 2, "des": 1, "csr": 1, "acc": 2}, "attack", RollMap{{0, 2}, {3, 3}, {5, 1}}},
+		{"deluxe", map[string]int{"inf": 2, "lar": 1}, "attack", RollMap{{1, 1}, {2, 2}}},
+		{"deluxe", map[string]int{"hif": 2, "lar": 1}, "attack", RollMap{{2, 2}, {3, 1}}},
+		{"deluxe", map[string]int{"hif": 2, "har": 1}, "attack", RollMap{{2, 1}, {3, 2}}},
+
+		// Testing Tactical bomber boost with any flf or tank
+		{"deluxe", map[string]int{"tac": 2, "flf": 1}, "attack", RollMap{{4, 2}, {5, 1}}},
+		{"deluxe", map[string]int{"tac": 2, "flf": 1}, "attack", RollMap{{4, 2}, {5, 1}}},
+		{"deluxe", map[string]int{"tac": 2, "htk": 1}, "attack", RollMap{{4, 2}, {5, 1}}},
+
+		// Testing bunker facilities
+		{"deluxe", map[string]int{"inf": 5, "hif": 3, "cbf": 1}, "defend", RollMap{{1, 2}, {2, 3}, {4, 4}}},
+		{"deluxe", map[string]int{"inf": 5, "hif": 3, "mjb": 1}, "defend", RollMap{{1, 4}, {2, 1}, {3, 1}, {4, 3}}},
+		{"deluxe", map[string]int{"inf": 5, "hif": 3, "mnb": 1}, "defend", RollMap{{0, 1}, {1, 5}, {4, 3}}},
 	}
 	for _, tt := range values {
+		SetGame(tt.game)
 
 		rmap := createRollMap(tt.units, tt.mode)
 
@@ -247,6 +270,7 @@ func TestRollMapper(t *testing.T) {
 			t.Errorf("roll map did not generate correctly\nexpected:%v\nactual:%v", tt.expected, rmap)
 		}
 	}
+	SetGame("1940")
 }
 
 func TestSetOol(t *testing.T) {
@@ -404,4 +428,29 @@ func TestMultiRollUnits(t *testing.T) {
 			t.Errorf("MultiRoll units are rolling incorrectly.\nformation: %v", tt.formation)
 		}
 	}
+}
+
+func TestRollDie(t *testing.T) {
+	values := []struct {
+		game     string
+		randSeed int64
+		result   int
+	}{
+		{"deluxe", 7, 7},
+		{"deluxe", 8, 1},
+		{"deluxe", 10, 7},
+		{"deluxe", 11, 1},
+		{"deluxe", 18, 8},
+		{"deluxe", 19, 6},
+	}
+	for _, tt := range values {
+		SetGame(tt.game)
+		rand.Seed(tt.randSeed)
+		val := rollDie()
+		if val != tt.result {
+			t.Errorf("RollDie did not return the correct result for seed\nexpected: %v\nactual: %v", tt.result, val)
+		}
+	}
+	// Reset the game back to 1940
+	SetGame("1940")
 }

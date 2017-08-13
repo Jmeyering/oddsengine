@@ -9,12 +9,17 @@ type Unit struct {
 	Attack           int
 	Defend           int
 	IsShip           bool
+	IsAAA            bool
 	IsSub            bool
 	IsAircraft       bool
+	IsBunker         bool
 	CapitalShip      bool
 	CanBombard       bool
 	CanTakeTerritory bool
 	PlusOneRolls     func(map[string]int) int
+	PlusOneDefend    func(map[string]int) int
+	// Number of units receiving a defensive boost if this is a bunker
+	Capacity int
 	// MultiRoll is the number of dice the unit can roll, and select the best
 	// roll for it's hit.
 	MultiRoll int
@@ -87,6 +92,8 @@ func (p ByCost) Less(i, j int) bool {
 // valid for a particular game identified by the game string passed in
 func getUnitsForGame(game string) (p Units) {
 	switch game {
+	case "deluxe":
+		p = getDeluxeUnits()
 	case "1940":
 		p = get1940Units()
 	case "1941":

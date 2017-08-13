@@ -13,7 +13,7 @@ func TestUnitSwitching(t *testing.T) {
 	}{
 		{"1941", []string{"inf", "sub", "tan", "des", "fig", "car", "bom", "bat"}},
 		{"1942", []string{"inf", "art", "sub", "tan", "des", "fig", "cru", "bom", "car", "bat", "aaa"}},
-		{"1940", []string{"kam", "inf", "mec", "imec", "art", "aart", "raaa", "sub", "ssub", "tan", "des", "fig", "jfig", "tac", "cru", "hbom", "bom", "car", "bat", "aaa"}},
+		{"1940", []string{"kam", "inf", "imec", "mec", "art", "aart", "raaa", "sub", "ssub", "tan", "des", "fig", "jfig", "tac", "cru", "hbom", "bom", "car", "bat", "aaa"}},
 	}
 	for _, tt := range values {
 		SetGame(tt.game)

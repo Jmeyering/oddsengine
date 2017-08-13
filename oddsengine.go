@@ -17,12 +17,12 @@ var (
 	// ConflictProfile for the Summary. Default is 1000
 	iterations = 1000
 
-	// activeUnits are the units available in the current game version
-	// default units are 1940 units.
-	activeUnits = getUnitsForGame("1940")
-
 	// activeGame is the game current being run by the simulator
 	activeGame = "1940"
+
+	// activeUnits are the units available in the current game version
+	// default units are 1940 units.
+	activeUnits = getUnitsForGame(activeGame)
 
 	// oolProfile is the general strategy for taking losses. Possible values are
 	// "cost" and "hitValue"
@@ -243,7 +243,7 @@ func resolveConflict(a, d map[string]int, ool []string) *ConflictProfile {
 		 */
 
 		// Reduce the number of rolls at the AAA hitValue
-		defenderRollMap.RemoveUnits(defenders, []string{"aaa", "raaa"}, "defend")
+		defenderRollMap.RemoveUnits(defenders, []string{"aaa", "raaa", "aag"}, "defend")
 
 		// We need to reduce the number of rolls in the roll map to account for
 		// the subs that have already attacked.
@@ -377,9 +377,14 @@ func resolveConflict(a, d map[string]int, ool []string) *ConflictProfile {
 
 }
 
-// rollDie functions as a random 1-6 number generator.
+// rollDie functions as a random number generator Rolls at 6 normally, but
+// deluxe rolls an 8 sided die. This needs a good refactor.
 func rollDie() int {
-	return rand.Intn(6) + 1
+	rollBase := 6
+	if activeGame == "deluxe" {
+		rollBase = 8
+	}
+	return rand.Intn(rollBase) + 1
 }
 
 // multiRoll will roll a number of dice at a specific hitValue, returning the
@@ -415,12 +420,17 @@ func createRollMap(f map[string]int, mode string) (rollMap RollMap) {
 
 		unit := activeUnits.Find(realAlias(alias))
 
-		hitValue = unit.Defend
 		if mode == "attack" {
 			hitValue = unit.Attack
 
 			if unit.PlusOneRolls != nil {
 				shotsAtPlusOne = unit.PlusOneRolls(f)
+				totalNumUnits = totalNumUnits - shotsAtPlusOne
+			}
+		} else {
+			hitValue = unit.Defend
+			if unit.PlusOneDefend != nil {
+				shotsAtPlusOne = unit.PlusOneDefend(f)
 				totalNumUnits = totalNumUnits - shotsAtPlusOne
 			}
 		}
@@ -463,7 +473,17 @@ func getAAARollMap(a, d map[string]int) RollMap {
 		unitAlias = "raaa"
 	}
 
+	// Refactor some day this is awful
+	if game == "deluxe" {
+		unitAlias = "aag"
+	}
+
 	numAAA := numAllUnitsInFormation(d, unitAlias)
+
+	// In deluxe the number of AAG shots is equal to the number of planes
+	if game == "deluxe" {
+		numAAA := numPlanes
+	}
 
 	// Determine how many planes the attacker has in it's fleet
 	for _, plane := range aircraft {
