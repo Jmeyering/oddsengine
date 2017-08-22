@@ -474,14 +474,14 @@ func getAAARollMap(a, d map[string]int) RollMap {
 	}
 
 	// Refactor some day this is awful
-	if game == "deluxe" {
+	if activeGame == "deluxe" {
 		unitAlias = "aag"
 	}
 
 	numAAA := numAllUnitsInFormation(d, unitAlias)
 
 	// In deluxe the number of AAG shots is equal to the number of planes
-	if game == "deluxe" {
+	if activeGame == "deluxe" {
 		numAAA := numPlanes
 	}
 
@@ -861,7 +861,7 @@ func checkUnitValidity(p map[string]int) error {
 	}
 
 	if len(invalid) > 0 {
-		return &InvalidUnitError{fmt.Sprintf("\"%v\"", strings.Join(invalid, "\", \""))}
+		return &InvalidUnitError{fmt.Sprintf("Invalid Unit(s) supplied:\n%s", strings.Join(invalid, ", "))}
 	}
 
 	return nil
