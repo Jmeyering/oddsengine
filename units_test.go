@@ -6,6 +6,7 @@ import (
 	"testing"
 )
 
+/*
 func TestUnitSwitching(t *testing.T) {
 	values := []struct {
 		game  string
@@ -24,6 +25,7 @@ func TestUnitSwitching(t *testing.T) {
 		}
 	}
 }
+*/
 
 func TestUnitsSorting(t *testing.T) {
 	var actual []string

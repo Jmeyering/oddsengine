@@ -51,9 +51,9 @@ type ByCost struct{ Units }
 
 // Less implementing Sortable
 func (p ByDefendingPower) Less(i, j int) bool {
-	if p.Units[i].Alias == "aaa" {
+	if p.Units[i].Alias == "aaa" || p.Units[i].Alias == "raaa" || p.Units[i].Alias == "aag" {
 		return false
-	} else if p.Units[j].Alias == "aaa" {
+	} else if p.Units[j].Alias == "aaa" || p.Units[j].Alias == "raaa" || p.Units[j].Alias == "aag" {
 		return true
 	} else if p.Units[i].Defend == p.Units[j].Defend {
 		return p.Units[i].Cost < p.Units[j].Cost
@@ -64,9 +64,9 @@ func (p ByDefendingPower) Less(i, j int) bool {
 
 // Less implementing Sortable
 func (p ByAttackingPower) Less(i, j int) bool {
-	if p.Units[i].Alias == "aaa" {
+	if p.Units[i].Alias == "aaa" || p.Units[i].Alias == "raaa" || p.Units[i].Alias == "aag" {
 		return false
-	} else if p.Units[j].Alias == "aaa" {
+	} else if p.Units[j].Alias == "aaa" || p.Units[j].Alias == "raaa" || p.Units[j].Alias == "aag" {
 		return true
 	} else if p.Units[i].Attack == p.Units[j].Attack {
 		return p.Units[i].Cost < p.Units[j].Cost
@@ -77,9 +77,9 @@ func (p ByAttackingPower) Less(i, j int) bool {
 
 // Less implementing Sortable
 func (p ByCost) Less(i, j int) bool {
-	if p.Units[i].Alias == "aaa" {
+	if p.Units[i].Alias == "aaa" || p.Units[i].Alias == "raaa" || p.Units[i].Alias == "aag" {
 		return false
-	} else if p.Units[j].Alias == "aaa" {
+	} else if p.Units[j].Alias == "aaa" || p.Units[j].Alias == "raaa" || p.Units[j].Alias == "aag" {
 		return true
 	} else if p.Units[i].Cost == p.Units[j].Cost {
 		return p.Units[i].Attack < p.Units[j].Attack
@@ -262,6 +262,7 @@ func get1940Units() Units {
 			Cost:   5,
 			Attack: 0,
 			Defend: 2,
+			IsAAA:  true,
 		},
 		Unit{
 			Alias:      "jfig",
@@ -352,6 +353,7 @@ func get1942Units() Units {
 			Cost:   5,
 			Attack: 0,
 			Defend: 1,
+			IsAAA:  true,
 		},
 		Unit{
 			Alias:            "art",
