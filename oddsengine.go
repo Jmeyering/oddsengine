@@ -480,11 +480,6 @@ func getAAARollMap(a, d map[string]int) RollMap {
 
 	numAAA := numAllUnitsInFormation(d, unitAlias)
 
-	// In deluxe the number of AAG shots is equal to the number of planes
-	if activeGame == "deluxe" {
-		numAAA := numPlanes
-	}
-
 	// Determine how many planes the attacker has in it's fleet
 	for _, plane := range aircraft {
 		numPlanes += numAllUnitsInFormation(a, plane)
@@ -678,7 +673,7 @@ func canBombard(units map[string]int) bool {
 // canUseAAA lets the program know if the current set of attackers and
 // defenders are capable of using AAA before the start of the battle
 func canUseAAA(attackers, defenders map[string]int) bool {
-	return (hasUnit(defenders, "aaa") || hasUnit(defenders, "raaa")) && hasAircraft(attackers)
+	return (hasUnit(defenders, "aaa") || hasUnit(defenders, "raaa") || hasUnit(defenders, "aag")) && hasAircraft(attackers)
 }
 
 // getTotalNumUnits returns the total number of units within a map of units

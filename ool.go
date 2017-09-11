@@ -51,7 +51,7 @@ func setupOol() {
 		// If the unit is an AAA we skip entirely. It needs to be added to the
 		// baseOol last because of the special rules regarding when it can be
 		// taken.
-		if p.Alias == "aaa" || p.Alias == "raaa" {
+		if p.Alias == "aaa" || p.Alias == "raaa" || p.Alias == "aag" {
 			hasAAA = true
 			continue
 		}
@@ -88,7 +88,7 @@ func setupOol() {
 	// Every OOL that we create must add the "aaa" last. because AAA is a
 	// special unit that must always be taken last.
 	if hasAAA {
-		baseOol = append(baseOol, "aaa", "raaa")
+		baseOol = append(baseOol, "aaa", "raaa", "aag")
 	}
 
 }
@@ -124,6 +124,8 @@ func customizeOol(attackers, defenders map[string]int) []string {
 	if activeUnits.HasUnit("raaa") {
 		ool = append(ool, "raaa")
 	}
-
+	if activeUnits.HasUnit("aag") {
+		ool = append(ool, "aag")
+	}
 	return ool
 }
