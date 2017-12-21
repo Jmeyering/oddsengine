@@ -377,11 +377,15 @@ func resolveConflict(a, d map[string]int, ool []string) *ConflictProfile {
 
 }
 
+func isYGGame() bool {
+	return activeGame == "deluxe" || activeGame == "1940deluxe"
+}
+
 // rollDie functions as a random number generator Rolls at 6 normally, but
 // deluxe rolls an 8 sided die. This needs a good refactor.
 func rollDie() int {
 	rollBase := 6
-	if activeGame == "deluxe" {
+	if isYGGame() {
 		rollBase = 8
 	}
 	return rand.Intn(rollBase) + 1
@@ -474,7 +478,7 @@ func getAAARollMap(a, d map[string]int) RollMap {
 	}
 
 	// Refactor some day this is awful
-	if activeGame == "deluxe" {
+	if isYGGame() {
 		unitAlias = "aag"
 	}
 

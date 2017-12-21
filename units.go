@@ -92,6 +92,8 @@ func (p ByCost) Less(i, j int) bool {
 // valid for a particular game identified by the game string passed in
 func getUnitsForGame(game string) (p Units) {
 	switch game {
+	case "1940deluxe":
+		p = get1940DeluxeUnits()
 	case "deluxe":
 		p = getDeluxeUnits()
 	case "1940":

@@ -335,3 +335,198 @@ func getDeluxeUnits() Units {
 		},
 	}
 }
+func get1940DeluxeUnits() Units {
+	return Units{
+		Unit{
+			Alias:  "aag",
+			Name:   "ANTI-AIRCRAFT GUN",
+			Cost:   5,
+			Attack: 0,
+			Defend: 1,
+			IsAAA:  true,
+		},
+		Unit{
+			Alias:  "mif",
+			Name:   "MECH Inf",
+			Cost:   4,
+			Attack: 1,
+			Defend: 2,
+			PlusOneRolls: func(u map[string]int) int {
+				var shots int
+				var remainingShots int
+
+				var pairedArtilleryShotsAvailable int
+
+				numInf := numAllUnitsInFormation(u, "inf")
+				numMec := numAllUnitsInFormation(u, "mif")
+				numArt := numAllUnitsInFormation(u, "art")
+				numAArt := numAllUnitsInFormation(u, "aart")
+
+				pairedArtilleryShotsAvailable = numArt + (numAArt * 2)
+
+				if pairedArtilleryShotsAvailable == 0 {
+					return shots
+				}
+
+				// 2 mec 3 art
+				if numInf > 0 {
+					remainingShots = pairedArtilleryShotsAvailable - numInf
+				} else {
+					remainingShots = pairedArtilleryShotsAvailable
+				}
+
+				if remainingShots <= 0 {
+					return shots
+				}
+
+				if remainingShots < numMec {
+					shots = remainingShots
+				} else {
+					shots = numMec
+				}
+
+				return shots
+			},
+			CanTakeTerritory: true,
+		},
+		Unit{
+			Alias:            "inf",
+			Name:             "INFANTRY",
+			Cost:             3,
+			Attack:           1,
+			Defend:           2,
+			CanTakeTerritory: true,
+			PlusOneRolls: func(u map[string]int) int {
+				var shots int
+				var pairedArtilleryShotsAvailable int
+
+				numInf := numAllUnitsInFormation(u, "inf")
+				numArt := numAllUnitsInFormation(u, "art")
+				numAArt := numAllUnitsInFormation(u, "aart")
+
+				pairedArtilleryShotsAvailable = numArt + (numAArt * 2)
+
+				if pairedArtilleryShotsAvailable == 0 {
+					return shots
+				}
+
+				// Assume they will all be paired
+				shots = numInf
+
+				// If they can't all be paired, return the total number of
+				// possible pairings
+				if pairedArtilleryShotsAvailable < numInf {
+					shots = pairedArtilleryShotsAvailable
+				}
+
+				return shots
+			},
+		},
+		Unit{
+			Alias:            "art",
+			Name:             "ARTILLERY",
+			Cost:             4,
+			Attack:           2,
+			Defend:           2,
+			CanTakeTerritory: true,
+		},
+		Unit{
+			Alias:            "tnk",
+			Name:             "TANK",
+			Cost:             6,
+			Attack:           4,
+			Defend:           4,
+			CanTakeTerritory: true,
+		},
+		Unit{
+			Alias:      "ftr",
+			Name:       "FIGHTER",
+			Cost:       10,
+			Attack:     4,
+			IsAircraft: true,
+			Defend:     5,
+		},
+		Unit{
+			Alias:      "tac",
+			Name:       "TACTICAL BOMBER",
+			Cost:       11,
+			Attack:     4,
+			Defend:     4,
+			IsAircraft: true,
+			PlusOneRolls: func(u map[string]int) int {
+				var shots int
+
+				numTac := numAllUnitsInFormation(u, "tac")
+				numFig := numAllUnitsInFormation(u, "fig")
+				numTan := numAllUnitsInFormation(u, "tan")
+
+				totalNumBoosters := numFig + numTan
+
+				if totalNumBoosters == 0 {
+					return shots
+				}
+
+				// The number of shots are limited by the total number of tac
+				// within the unit group
+				shots = numTac
+				if totalNumBoosters < numTac {
+					shots = totalNumBoosters
+				}
+
+				return shots
+			},
+		},
+		Unit{
+			Alias:      "sbr",
+			Name:       "STRATEGIC BOMBER",
+			Cost:       12,
+			Attack:     5,
+			Defend:     1,
+			IsAircraft: true,
+		},
+		Unit{
+			Alias:  "sbm",
+			Name:   "SUBMARINE",
+			Cost:   6,
+			Attack: 3,
+			Defend: 1,
+			IsShip: true,
+			IsSub:  true,
+		},
+		Unit{
+			Alias:  "des",
+			Name:   "DESTROYER",
+			Cost:   8,
+			Attack: 2,
+			Defend: 3,
+			IsShip: true,
+		},
+		Unit{
+			Alias:  "csr",
+			Name:   "CRUISER",
+			Cost:   12,
+			Attack: 5,
+			Defend: 5,
+			IsShip: true,
+		},
+		Unit{
+			Alias:       "acc",
+			Name:        "AIRCRAFT CARRIER",
+			Cost:        16,
+			Attack:      1,
+			Defend:      2,
+			IsShip:      true,
+			CapitalShip: true,
+		},
+		Unit{
+			Alias:       "bts",
+			Name:        "BATTLESHIP",
+			Cost:        20,
+			Attack:      6,
+			Defend:      6,
+			IsShip:      true,
+			CanBombard:  true,
+			CapitalShip: true,
+		},
+	}
+}
