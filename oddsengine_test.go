@@ -247,9 +247,6 @@ func TestRollMapper(t *testing.T) {
 
 		// Deluxe combined arms.
 		{"deluxe", map[string]int{"sbm": 2, "des": 1, "csr": 1, "acc": 2}, "attack", RollMap{{0, 2}, {3, 3}, {5, 1}}},
-		{"deluxe", map[string]int{"inf": 2, "lar": 1}, "attack", RollMap{{1, 1}, {2, 2}}},
-		{"deluxe", map[string]int{"hif": 2, "lar": 1}, "attack", RollMap{{2, 2}, {3, 1}}},
-		{"deluxe", map[string]int{"hif": 2, "har": 1}, "attack", RollMap{{2, 1}, {3, 2}}},
 
 		// Testing Tactical bomber boost with any flf or tank
 		{"deluxe", map[string]int{"tac": 2, "flf": 1}, "attack", RollMap{{4, 2}, {5, 1}}},
